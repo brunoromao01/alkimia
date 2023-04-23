@@ -1,16 +1,11 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import { Text, View, StyleSheet, TouchableWithoutFeedback, ScrollView, FlatList } from 'react-native'
-import FontAwesome from 'react-native-vector-icons/FontAwesome'
 import { RFValue } from "react-native-responsive-fontsize"
 import estilo from '../estilo'
-import { getRealm } from '../services/realm'
 import { Menu, MenuOptions, MenuOption, MenuTrigger } from 'react-native-popup-menu';
-import { useFocusEffect } from '@react-navigation/native'
 
 export default ({ data, deletingRecipe, producingRecipe, editingRecipe, cloningRecipe }) => {
     const [showFullCard, setShowFullCard] = useState(false)
-
-    const dateFormated = data.createdAt.toLocaleDateString('pt-BR')
     const essencias = data.essences
     const percents = data.percents
     const vg = data.vg
@@ -30,10 +25,6 @@ export default ({ data, deletingRecipe, producingRecipe, editingRecipe, cloningR
                     <View style={{ width: '30%', alignItems: 'center' }}>
                         <Text style={[styles.textCardRecipe, { fontFamily: estilo.fonts.padrao }]}>{vg}/{pg}</Text>
                     </View>
-                    {/* <View style={{ width: '25%', alignItems: 'center', marginRight: RFValue(5) }}>
-                    <Text style={[styles.textCardEssence, { fontFamily: estilo.fonts.padrao, textAlign: 'left' }]}>{dateFormat}</Text>
-
-                </View> */}
                     <View style={{ width: '5%', justifyContent: 'center' }}>
                         <Menu>
                             <MenuTrigger customStyles={{ triggerText: { color: estilo.colors.azul } }} text='>' />
@@ -73,11 +64,7 @@ export default ({ data, deletingRecipe, producingRecipe, editingRecipe, cloningR
                                 }
                             />
                         </View>
-                        {/* <View style={{ justifyContent: 'flex-end', backgroundColor: '#fff', alignItems: 'flex-end', width: '40%', paddingRight: RFValue(10), paddingVertical: RFValue(5) }}>
-
-                                <Text style={styles.textCardEssence}>Criado:</Text>
-                                <Text style={styles.textCardEssence}>{dateFormated}</Text>
-                            </View> */}
+                       
 
                     </>
                     : false

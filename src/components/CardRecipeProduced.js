@@ -127,11 +127,11 @@ export default ({ data, saveRating }) => {
 
             <View style={{ flexDirection: 'row', alignItems: 'center', width: '100%', marginTop: RFValue(5) }}>
                 <View style={{ width: '40%', flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}>
-                    <Image style={{ width: RFValue(25), height: RFValue(25) }} source={require('../assets/tabIcon/day.png')} />
+                    <Image style={{ width: RFValue(25), height: RFValue(25) }} source={require('../assets/colorIcon/day.png')} />
                     <Text style={[styles.textCardRecipeBottom, { marginLeft: RFValue(5) }]} adjustsFontSizeToFit numberOfLines={1}>{datavencimentodescanso}</Text>
                 </View>
                 <View style={{ width: '27%', flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', marginLeft: RFValue(5) }}>
-                    <Image style={{ width: RFValue(25), height: RFValue(25) }} source={require('../assets/tabIcon/schedule.png')} />
+                    <Image style={{ width: RFValue(25), height: RFValue(25) }} source={require('../assets/colorIcon/schedule.png')} />
                     <Text style={[styles.textCardRecipeBottom, { marginLeft: RFValue(5) }]}>{mesVencimento}</Text>
                 </View>
                 <View style={{ width: '33%', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-evenly' }}>

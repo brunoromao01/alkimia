@@ -217,6 +217,7 @@ export default props => {
     //compara quantidade usada na receita com quantidade disponivel
     //caso quantidade disponivel seja menor, é recomendado a maior quantidade
     const productionAnalysis = async () => {
+        var percentualGeral = []
         const arrQuantidadeEstoque = []
         const arrQuantidadeUsada = []
         const arrDivergencia = []
@@ -225,13 +226,28 @@ export default props => {
         recipeWillProduced.percents.map(percent => arrQuantidadeUsada.push((percent * quantityRecipe) / 100))
         //arrQuantidadeEstoque = quantidade no estoque de cada essência
         recipeWillProduced.essences.map(essencia => arrQuantidadeEstoque.push(essencia.quantity))
+        var pgQuantidadeUsada = 0
+        for (let index = 0; index < arrQuantidadeUsada.length; index++) {
+            console.log(arrQuantidadeUsada[index])
+            pgQuantidadeUsada += arrQuantidadeUsada[index]
+        }
+        arrQuantidadeUsada.push((recipeWillProduced.pg * quantityRecipe / 100) - pgQuantidadeUsada) //percentual em valor = pg
+        arrQuantidadeUsada.push(Number(recipeWillProduced.vg * quantityRecipe / 100)) //percentual em valor = vg
+        arrQuantidadeEstoque.push(recipeWillProduced.essencePg.quantity) //quantidade estoque pg     
+        arrQuantidadeEstoque.push(recipeWillProduced.essenceVg.quantity) //quantidade estoque vg
+        percentualGeral = [...recipeWillProduced.percents] //porcentagem apenas das essencias
+        percentualGeral.push(recipeWillProduced.pg) //percentualGeral = acrescentando percentual de pg e vg na listagem
+        percentualGeral.push(recipeWillProduced.vg)
+
+        //Ex: percentualGeral = [essencia1%, essencia2%, essencia3%, ..., pg%, vg%]
 
         for (let index = 0; index < arrQuantidadeEstoque.length; index++) {
+
             if (arrQuantidadeUsada[index] <= arrQuantidadeEstoque[index]) {
                 cont++ //contador para saber se todas as essencias estao com estoque ok
             } else {
                 // array grava a quantidade maxima que poderia ser feito de cada essencia que ficou com falta
-                arrDivergencia.push(arrQuantidadeEstoque[index] / (recipeWillProduced.percents[index] / 100))
+                arrDivergencia.push(arrQuantidadeEstoque[index] / (percentualGeral[index] / 100))
             }
         }
 
@@ -243,11 +259,38 @@ export default props => {
             console.log('salvar receita com quantidade recomendada')
             setNewQuantityrecipe(minValue)
             setShowAlert(true)
+            updateQuantityEssences(recipeWillProduced, minValue)
         } else {
             console.log('salvar receita com quantidade informada')
             saveRecipeProduced(quantityRecipe)
+            updateQuantityEssences(recipeWillProduced, quantityRecipe)
         }
 
+    }
+
+    async function updateQuantityEssences(recipeWillProduced, quantity) {
+        const arrPercentuais = [...recipeWillProduced.percents]
+        var soma = 0
+        arrPercentuais.map(percent => soma+=percent)
+        arrPercentuais.push(recipeWillProduced.vg)
+        arrPercentuais.push(recipeWillProduced.pg - soma)
+        //arrPercentuais recebe todos os percentuais das essencias usadas = [essencia1%, essencia2%, ..., vg%, pg%]
+        const arrEssencias = [...recipeWillProduced.essences]
+        arrEssencias.push(recipeWillProduced.essenceVg)
+        arrEssencias.push(recipeWillProduced.essencePg)
+        //arrEssencias recebe {Essence} = [{essencia1}, {essencia2}, ..., {vg}, {pg}]
+        const realm = await getRealm()
+        for (let index = 0; index < arrEssencias.length; index++) {
+            try {
+                const essenciaLocalizada = realm.objectForPrimaryKey('Essence',`${arrEssencias[index]._id}`)
+                realm.write(() => {
+                    //buscando a essencia no banco pelo id, é descontado a quantidade usada na receita
+                    essenciaLocalizada.quantity = essenciaLocalizada.quantity - (arrPercentuais[index] * quantity /100)
+                })
+            } catch (error) {
+                console.log('ERRO: ' + error)
+            }
+        }
     }
 
     async function saveRecipeProduced(quantity) {
@@ -605,7 +648,7 @@ export default props => {
 
                                             return (
                                                 <>
-                                                    <View flexDirection='row' style={[styles.cardEssence, { padding: 5 }]}>
+                                                    <View flexDirection='row' style={[styles.cardEssence, { padding: RFValue(5), borderRadius: RFValue(5), }]}>
                                                         <View style={{ width: '20%', paddingLeft: RFValue(10), justifyContent: 'center' }}>
                                                             <Text style={styles.textCardEssence}>VG</Text>
                                                         </View>
@@ -618,9 +661,9 @@ export default props => {
                                                                 renderCustomizedButtonChild={(selectedItem, index) => {
                                                                     var textVg = ''
                                                                     if (selectedItem) {
-                                                                        textVg = selectedItem.brand.name
+                                                                        textVg = `${selectedItem.name} - ${selectedItem.brand.name}`
                                                                     } else if (vgSelected) {
-                                                                        textVg = vgSelected.brand.name
+                                                                        textVg = `${vgSelected.name} - ${vgSelected.brand.name}`
                                                                     } else {
                                                                         textVg = '*Selecione o VG'
                                                                     }
@@ -635,7 +678,7 @@ export default props => {
                                                                 renderCustomizedRowChild={(item, index) => {
                                                                     return (
                                                                         <View style={{ alignItems: 'center', justifyContent: 'center' }}>
-                                                                            <Text style={styles.textDropDown}>{item.brand.name}</Text>
+                                                                            <Text style={styles.textDropDown}>{item.name} - {item.brand.name}</Text>
                                                                         </View>
                                                                     );
                                                                 }}
@@ -658,7 +701,7 @@ export default props => {
                                                         </View>
                                                     </View>
                                                     <SeparatorFlatlist />
-                                                    <View flexDirection='row' style={[styles.cardEssence, { padding: RFValue(5) }]}>
+                                                    <View flexDirection='row' style={[styles.cardEssence, { padding: RFValue(5), borderRadius: RFValue(5), }]}>
                                                         <View style={{ width: '20%', paddingLeft: RFValue(10), justifyContent: 'center' }}>
                                                             <Text style={styles.textCardEssence}>PG</Text>
                                                         </View>
@@ -671,9 +714,9 @@ export default props => {
                                                                 renderCustomizedButtonChild={(selectedItem, index) => {
                                                                     var textPg = ''
                                                                     if (selectedItem) {
-                                                                        textPg = selectedItem.brand.name
+                                                                        textPg = `${selectedItem.name} - ${selectedItem.brand.name}`
                                                                     } else if (pgSelected) {
-                                                                        textPg = pgSelected.brand.name
+                                                                        textPg = `${pgSelected.name} - ${pgSelected.brand.name}`
                                                                     } else {
                                                                         textPg = '*Selecione o PG'
                                                                     }
@@ -686,7 +729,7 @@ export default props => {
                                                                 renderCustomizedRowChild={(item, index) => {
                                                                     return (
                                                                         <View style={{ flexDirection: 'row', justifyContent: 'center' }}>
-                                                                            <Text style={styles.textDropDown}>{item.brand.name}</Text>
+                                                                            <Text style={styles.textDropDown}>{item.name} - {item.brand.name}</Text>
                                                                         </View>
                                                                     );
                                                                 }}
@@ -769,7 +812,7 @@ export default props => {
                                     keyExtractor={item => item._id}
                                     renderItem={({ item }) => <CardRecipe data={item} deletingRecipe={deletingRecipe} cloningRecipe={cloningRecipe} producingRecipe={producingRecipe} editingRecipe={editingRecipe} />}
                                     ItemSeparatorComponent={<SeparatorFlatlist />}
-                                ></FlatList>
+                                />
 
                             </>
 

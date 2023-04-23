@@ -6,9 +6,9 @@ import { getRealm } from '../services/realm'
 import { v4 as uuid } from 'uuid'
 import estilo from '../estilo'
 import Header from '../components/Header'
-
 import { RFValue } from "react-native-responsive-fontsize"
-import { Menu, MenuOptions, MenuOption, MenuTrigger } from 'react-native-popup-menu';
+import CardEssence from '../components/CardEssence'
+import SeparatorFlatlist from '../components/SeparatorFlatlist'
 
 export default props => {
     const [modalVisible, setModalVisible] = useState(false);
@@ -16,6 +16,7 @@ export default props => {
     const [modalSuplier, setModalSuplier] = useState(false);
     const [search, setSearch] = useState("")
     const [isEssence, setIsEssence] = useState(true)
+   
 
     //marca e fornecedor são os label dos input
     const [marca, setMarca] = useState("Marca")
@@ -49,7 +50,7 @@ export default props => {
                 // realm.write(() => {
                 //     realm.deleteAll()
                 // })
-             
+
                 setEssences(e)
                 setBrands(b)
                 setSupliers(s)
@@ -210,7 +211,7 @@ export default props => {
 
     // salvando essência no banco
     async function saveNewEssence() {
-        const parsePrice = Number(newPrice)
+        const parsePrice = Number(newPrice) / Number(newQuantity)
         const parseQuantity = Number(newQuantity)
         const realm = await getRealm()
         var status = idUpdated == 0 ? 'never' : 'modified'
@@ -239,9 +240,6 @@ export default props => {
     }
 
 
-
-
-
     //Ao clicar no trigger Editar (manda o item do card = a essencia a ser editada)
     function updateEssence(data) {
         setIdUpdated(data._id)
@@ -254,6 +252,7 @@ export default props => {
         setNewBrandFull(data.brand)
         setMarca(data.brand.name)
         setModalVisible(true)
+        setIsEssence(data.isEssence)
     }
 
     // const showEssences = async () => {
@@ -329,34 +328,8 @@ export default props => {
                 <FlatList
                     data={essences}
                     keyExtractor={item => item._id}
-                    renderItem={({ item }) => (
-                        <View style={[styles.cardEssence]}>
-                            <View style={{ width: '100%', flexDirection: 'row' }}>
-                                <View style={{ width: '45%' }}>
-                                    <Text style={[styles.textCardEssence, { fontFamily: estilo.fonts.padrao }]}>{item.name}</Text>
-                                </View>
-                                <View style={{ width: '40%', alignItems: 'center' }}>
-                                    <Text style={[styles.textCardEssence, { fontFamily: estilo.fonts.padrao }]}>{item.brand.name}</Text>
-                                </View>
-                                <View style={{ width: '10%', alignItems: 'center', marginRight: RFValue(5) }}>
-                                    <Text style={[styles.textCardEssence, { fontFamily: estilo.fonts.padrao }]}>{item.quantity}</Text>
-                                </View>
-                                <View style={{ width: '5%' }}>
-                                    <Menu>
-                                        <MenuTrigger customStyles={{ triggerText: { color: estilo.colors.azul } }} text='>' />
-                                        <MenuOptions>
-                                            <MenuOption onSelect={() => confirmDeletion(item)}>
-                                                <Text style={{ color: 'black' }}>Deletar</Text>
-                                            </MenuOption>
-                                            <MenuOption onSelect={() => updateEssence(item)}  >
-                                                <Text style={{ color: 'black' }}>Editar</Text>
-                                            </MenuOption>
-                                        </MenuOptions>
-                                    </Menu>
-                                </View>
-                            </View>
-                        </View>
-                    )}
+                    renderItem={({ item }) =>  <CardEssence updateEssence={updateEssence} confirmDeletion={confirmDeletion} item={item} />}
+                    ItemSeparatorComponent={<SeparatorFlatlist />}
                 />
 
 
@@ -421,7 +394,6 @@ export default props => {
                                             scrollEnabled
                                             keyExtractor={item => item._id}
                                             renderItem={({ item }) => (
-
                                                 <TouchableOpacity
                                                     onLongPress={() => {
                                                         deleteBrand(item)
@@ -431,7 +403,6 @@ export default props => {
                                                         <Text style={{ color: estilo.colors.azul, fontSize: RFValue(15) }}>{item.name}</Text>
                                                     </View>
                                                 </TouchableOpacity>
-
                                             )}
                                         />
                                     </View>
@@ -451,7 +422,13 @@ export default props => {
                                         />
 
                                         <TouchableOpacity
-                                            onPress={saveNewBrand}
+                                            onPress={() => {
+                                                if (newBrand !== '') {
+                                                    saveNewBrand()
+                                                } else {
+                                                    return
+                                                }
+                                            }}
                                         >
                                             <View style={{ borderRadius: RFValue(5), alignItems: 'center', justifyContent: 'center', height: RFValue(35), width: RFValue(35), backgroundColor: estilo.colors.laranja, marginLeft: RFValue(5), marginTop: RFValue(10) }}>
                                                 <FontAwesome name='plus' size={30} color='white' />
@@ -551,7 +528,13 @@ export default props => {
                                         />
 
                                         <TouchableOpacity
-                                            onPress={saveNewSuplier}
+                                            onPress={() => {
+                                                if (newSuplier !== '') {
+                                                    saveNewSuplier()
+                                                } else {
+                                                    return
+                                                }
+                                            }}
                                         >
                                             <View style={{ borderRadius: RFValue(5), alignItems: 'center', justifyContent: 'center', height: RFValue(35), width: RFValue(35), backgroundColor: estilo.colors.laranja, marginLeft: RFValue(5), marginTop: RFValue(10) }}>
                                                 <FontAwesome name='plus' size={RFValue(30)} color='white' />
