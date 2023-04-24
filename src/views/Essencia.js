@@ -16,10 +16,10 @@ export default props => {
     const [modalSuplier, setModalSuplier] = useState(false);
     const [search, setSearch] = useState("")
     const [isEssence, setIsEssence] = useState(true)
-   
+
 
     //marca e fornecedor são os label dos input
-    const [marca, setMarca] = useState("Marca")
+    const [marca, setMarca] = useState("*Marca")
     const [fornecedor, setFornecedor] = useState("Fornecedor")
 
     //brands, essences e supliers recebem os dados do banco
@@ -37,6 +37,12 @@ export default props => {
     const [newPrice, setNewPrice] = useState('')
     const [newTaste, setNewTaste] = useState('')
 
+    //alerta campos obrigatorios vazios
+
+    const [nameEmpty, setNameEmpty] = useState(false)
+    const [brandEmpty, setBrandEmpty] = useState(false)
+    const [quantityEmpty, setQuantityEmpty] = useState(false)
+    const [priceEmpty, setPriceEmpty] = useState(false)
 
 
     //sobe os dados para os usestates ao carregar a pagina
@@ -103,7 +109,6 @@ export default props => {
         try {
             const realm = await getRealm()
             const essencias = realm.objects('Essence')
-            // console.log(essencias)
             const marcalocalizada = essencias.filtered(`brand._id == "${item._id}"`).length
             if (marcalocalizada > 0) {
                 Alert.alert('Não é possível a exclusão', 'Marca vinculada a alguma essência')
@@ -123,7 +128,6 @@ export default props => {
         try {
             const realm = await getRealm()
             const receitas = realm.objects('Recipe')
-            // console.log(essencias)
             const essencialocalizada = receitas.filtered(`essences._id == "${item._id}"`).length
             if (essencialocalizada > 0) {
                 Alert.alert('Não é possível a exclusão', 'Essência vinculada a alguma receita')
@@ -143,7 +147,6 @@ export default props => {
         try {
             const realm = await getRealm()
             const essencias = realm.objects('Essence')
-            // console.log(essencias)
             const marcalocalizada = essencias.filtered(`suplier._id == "${item._id}"`).length
             if (marcalocalizada > 0) {
                 Alert.alert('Não é possível a exclusão', 'Fornecedor vinculada a alguma essência')
@@ -171,7 +174,7 @@ export default props => {
 
             })
         } catch (err) {
-            console.log('ERRO: ' + err)
+            console.log('[ERRO]: ' + err)
         }
     }
 
@@ -188,7 +191,7 @@ export default props => {
                 setNewSuplier('')
             })
         } catch (err) {
-            console.log('ERRO: ' + err)
+            console.log('[ERRO]: ' + err)
         }
     }
 
@@ -196,7 +199,7 @@ export default props => {
     const selectedBrand = (item) => {
         setMarca(item.name)
         setNewBrandFull(item)
-        console.log(item)
+        setBrandEmpty(false)
         setModalBrand(!modalBrand)
     }
 
@@ -211,32 +214,56 @@ export default props => {
 
     // salvando essência no banco
     async function saveNewEssence() {
-        const parsePrice = Number(newPrice) / Number(newQuantity)
-        const parseQuantity = Number(newQuantity)
-        const realm = await getRealm()
-        var status = idUpdated == 0 ? 'never' : 'modified'
-        var id = idUpdated == 0 ? `${uuid()}` : idUpdated
-        console.log(isEssence)
-        try {
-            realm.write(() => {
-                realm.create("Essence", {
-                    _id: id,
-                    name: newName,
-                    brand: newBrandFull,
-                    taste: newTaste,
-                    quantity: parseQuantity,
-                    price: parsePrice,
-                    suplier: newSuplierFull,
-                    isEssence: isEssence
-                }, status)
-            })
-            setMarca('Marca')
-            setFornecedor('Fornecedor')
-            setModalVisible(false)
-            console.log('')
-        } catch (err) {
-            console.log('ERRO: ' + err)
+        var cont = 0
+        if (newName == '' || newName == undefined) {
+            cont++
+            setNameEmpty(true)
         }
+        if (!newBrandFull._id) {
+            cont++
+            setBrandEmpty(true)
+        }
+        if (newQuantity == '' || newQuantity == undefined) {
+            cont++
+            setQuantityEmpty(true)
+        }
+        if (newPrice == '' || newPrice == undefined || newPrice == 0) {
+            cont++
+            setPriceEmpty(true)
+        }
+        if (cont == 0) {
+            const parsePrice = Number(newPrice) / Number(newQuantity)
+            const parseQuantity = Number(newQuantity)
+            const realm = await getRealm()
+            var status = idUpdated == 0 ? 'never' : 'modified'
+            var id = idUpdated == 0 ? `${uuid()}` : idUpdated
+            const fornecedor = newSuplierFull._id ? newSuplierFull : null
+            console.log(fornecedor)
+
+            try {
+                realm.write(() => {
+                    realm.create("Essence", {
+                        _id: id,
+                        name: newName,
+                        brand: newBrandFull,
+                        taste: newTaste,
+                        quantity: parseQuantity,
+                        price: parsePrice,
+                        suplier: fornecedor,
+                        isEssence: isEssence
+                    }, status)
+                    console.log(newSuplierFull)
+                })
+                setMarca('*Marca')
+                setFornecedor('Fornecedor')
+                setModalVisible(false)
+            } catch (err) {
+                console.log('[ERRO]: ' + err)
+            }
+        } else {
+            return
+        }
+
     }
 
 
@@ -245,7 +272,7 @@ export default props => {
         setIdUpdated(data._id)
         setNewName(data.name)
         setNewQuantity(data.quantity)
-        setNewPrice(data.price)
+        setNewPrice(data.price * data.quantity)
         setNewTaste(data.taste)
         setFornecedor(data.suplier.name)
         setNewSuplierFull(data.suplier)
@@ -254,22 +281,6 @@ export default props => {
         setModalVisible(true)
         setIsEssence(data.isEssence)
     }
-
-    // const showEssences = async () => {
-    //     const realm = await getRealm()
-    //     const essencias = realm.objects('Essence')
-    //     console.log(essencias[0].brand.name)
-
-    // }
-
-    // const showBrands = async () => {
-    //     const realm = await getRealm()
-    //     const marcas = realm.objects('Brand')
-    //     console.log(marcas)
-
-    // }
-
-
 
     return (
         <>
@@ -298,7 +309,7 @@ export default props => {
 
                 <View style={styles.viewButtonNew}>
                     <TouchableOpacity onPress={() => {
-                        setMarca('Marca')
+                        setMarca('*Marca')
                         setFornecedor('Fornecedor')
                         setNewName('')
                         setNewQuantity('')
@@ -328,7 +339,7 @@ export default props => {
                 <FlatList
                     data={essences}
                     keyExtractor={item => item._id}
-                    renderItem={({ item }) =>  <CardEssence updateEssence={updateEssence} confirmDeletion={confirmDeletion} item={item} />}
+                    renderItem={({ item }) => <CardEssence updateEssence={updateEssence} confirmDeletion={confirmDeletion} item={item} />}
                     ItemSeparatorComponent={<SeparatorFlatlist />}
                 />
 
@@ -365,15 +376,19 @@ export default props => {
                                 style={styles.inputModal}
                                 mode='outlined'
                                 keyboardType='default'
-                                label="Nome"
+                                label="*Nome"
                                 placeholder='Ex: Strawberry Ripe'
                                 placeholderTextColor={'#999'}
                                 outlineColor={estilo.colors.azul}
                                 activeOutlineColor={estilo.colors.laranja}
                                 selectionColor='#ccc'
                                 value={newName}
-                                onChangeText={name => setNewName(name)}
+                                onChangeText={name => {
+                                    setNewName(name)
+                                    setNameEmpty(false)
+                                }}
                             />
+                            {nameEmpty ? <Text style={{ color: '#ccc', width: '90%', alignSelf: 'center' }}>*Informe o nome</Text> : false}
 
                             <TouchableWithoutFeedback onPress={() => setModalBrand(true)}>
                                 <View style={{ width: '90%', borderWidth: 1, alignSelf: 'center', height: RFValue(50), backgroundColor: 'white', marginTop: RFValue(5), borderRadius: RFValue(3), flexDirection: 'row', alignItems: 'center' }}>
@@ -381,12 +396,15 @@ export default props => {
                                     <Text style={{ color: estilo.colors.azul, marginLeft: RFValue(12), fontSize: RFValue(15) }}>{marca}</Text>
                                 </View>
                             </TouchableWithoutFeedback>
+                            {brandEmpty ? <Text style={{ color: '#ccc', width: '90%', alignSelf: 'center' }}>*Informe a marca</Text> : false}
 
 
                             {/* Modal cadastro de marca */}
-                            <Modal visible={modalBrand} onDismiss={() => setModalVisible(!modalBrand)} onRequestClose={() => setModalBrand(!modalBrand)} animationType="fade"
+                            <Modal visible={modalBrand} onDismiss={() => setModalBrand(!modalBrand)} onRequestClose={() => setModalBrand(!modalBrand)} animationType="fade"
                                 transparent={true} >
-                                <View style={{ flex: 3, backgroundColor: 'rgba(0,0,0,0.6)' }}></View>
+
+                                <View style={{ flex: 3, backgroundColor: 'rgba(0,0,0,0.6)' }} />
+
                                 <View style={{ flex: 6, backgroundColor: 'white', paddingVertical: RFValue(15) }}>
                                     <View style={{ flex: 4, borderWidth: 1, borderRadius: RFValue(5), borderColor: estilo.colors.azul, paddingHorizontal: RFValue(10), marginHorizontal: RFValue(10) }}>
                                         <FlatList
@@ -437,12 +455,14 @@ export default props => {
                                         </TouchableOpacity>
                                     </View>
                                 </View>
-                                <View style={{ flex: 4, backgroundColor: 'rgba(0,0,0,0.6)' }}></View>
+
+                                <View style={{ flex: 4, backgroundColor: 'rgba(0,0,0,0.6)' }} />
+
                             </Modal>
 
                             <TextInput
                                 style={styles.inputModal}
-                                label="Quantidade (ml)"
+                                label="*Quantidade (ml)"
                                 mode='outlined'
                                 keyboardType='number-pad'
                                 placeholder='Ex: 15'
@@ -451,12 +471,23 @@ export default props => {
                                 activeOutlineColor={estilo.colors.laranja}
                                 selectionColor='#ccc'
                                 value={`${newQuantity}`}
-                                onChangeText={quantity => setNewQuantity(quantity)}
+                                onChangeText={quantity => {
+                                    if (quantity.includes(',')) {
+                                        return
+                                    } else if (quantity.includes) {
+
+                                    } else {
+                                        setNewQuantity(quantity)
+                                        setQuantityEmpty(false)
+                                    }
+
+                                }}
                             />
+                            {quantityEmpty ? <Text style={{ color: '#ccc', width: '90%', alignSelf: 'center' }}>*Informe a quantidade</Text> : false}
 
                             <TextInput
                                 style={styles.inputModal}
-                                label="Preço da quantidade informada ($)"
+                                label="*Preço da quantidade informada ($)"
                                 mode='outlined'
                                 placeholder='Ex: 25,00'
                                 placeholderTextColor={'#999'}
@@ -465,8 +496,12 @@ export default props => {
                                 activeOutlineColor={estilo.colors.laranja}
                                 selectionColor='#ccc'
                                 value={`${newPrice}`}
-                                onChangeText={price => setNewPrice(price)}
+                                onChangeText={price => {
+                                    setNewPrice(price)
+                                    setPriceEmpty(false)
+                                }}
                             />
+                            {priceEmpty ? <Text style={{ color: '#ccc', width: '90%', alignSelf: 'center' }}>*Informe o preço</Text> : false}
 
 
                             <TextInput
@@ -563,7 +598,7 @@ export default props => {
                         <View style={{ width: '3%', backgroundColor: 'rgba(0,0,0,0.6)' }} />
                     </View>
                     <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
-                        <View style={{ flex: 1, backgroundColor: 'transparent', backgroundColor: 'rgba(0,0,0,0.6)' }} />
+                        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)' }} />
                     </TouchableWithoutFeedback>
                 </Modal>
 

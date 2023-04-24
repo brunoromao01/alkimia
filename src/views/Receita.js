@@ -610,7 +610,7 @@ export default props => {
                                                 value={quantidade}
                                                 onChangeText={q => setQuantidade(q)}
                                             />
-                                            {quantityPercentEmpty && !quantidade ? <Text>*Digite a quantidade</Text> : false}
+                                            {quantityPercentEmpty && !quantidade ? <Text style={{ color: '#ccc' }}>*Digite a quantidade</Text> : false}
                                             <TouchableOpacity
                                                 onPress={() => insertEssence()}
                                             >

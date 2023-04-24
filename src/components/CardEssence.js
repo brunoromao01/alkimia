@@ -7,6 +7,8 @@ import { Menu, MenuOptions, MenuOption, MenuTrigger } from 'react-native-popup-m
 export default props => {
     const [showFullCard, setShowFullCard] = useState(false)
 
+    const fornecedor = props.item.suplier == null ? '--' : props.item.suplier.name
+
     return (
         <View style={[styles.cardEssence]}>
 
@@ -22,7 +24,7 @@ export default props => {
                         <Text style={styles.textCardEssence}>{props.item.brand.name}</Text>
                     </View>
                     <View style={{ width: '20%', alignItems: 'center', marginRight: RFValue(5) }}>
-                        <Text style={styles.textCardEssence}>{props.item.quantity}</Text>
+                        <Text style={styles.textCardEssence}>{(props.item.quantity).toFixed(2)}</Text>
                     </View>
                     <View style={{ width: '5%' }}>
                         <Menu>
@@ -45,17 +47,17 @@ export default props => {
                 showFullCard ?
                     <>
                         <View style={{ flexDirection: 'row', alignItems: 'center', width: '100%', marginTop: RFValue(5) }}>
-                            <View style={{ width: '35%', flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'center' }}>
+                            <View style={{ width: '33%', flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'center' }}>
                                 <Image style={{ width: RFValue(25), height: RFValue(25) }} source={require('../assets/colorIcon/delivery-truck.png')} />
-                                <Text style={[styles.textCardEssence, { marginLeft: RFValue(5) }]} adjustsFontSizeToFit numberOfLines={1}>{props.item.suplier.name}</Text>
+                                <Text style={[styles.textCardEssence, { marginLeft: RFValue(5) }]} adjustsFontSizeToFit numberOfLines={1}>{fornecedor}</Text>
                             </View>
-                            <View style={{ width: '30%', flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', marginLeft: RFValue(5) }}>
-                                <Image style={{ width: RFValue(25), height: RFValue(25) }} source={require('../assets/colorIcon/salt-and-pepper.png')} />
-                                <Text style={[styles.textCardEssence, { marginLeft: RFValue(5) }]} adjustsFontSizeToFit numberOfLines={1}>{props.item.taste}</Text>
+                            <View style={{ width: '34%', flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'center', marginLeft: RFValue(5) }}>
+                                <Image style={{ width: RFValue(20), height: RFValue(20) }} source={require('../assets/colorIcon/strawberry.png')} />
+                                <Text style={[styles.textCardEssence, { marginLeft: RFValue(5) }]} adjustsFontSizeToFit numberOfLines={1}>{props.item.taste ? props.item.taste : '--'}</Text>
                             </View>
-                            <View style={{ width: '35%', flexDirection: 'row', justifyContent: 'flex-end', marginRight: RFValue(10),alignItems: 'center', }}>
-                                <Image style={{ width: RFValue(25), height: RFValue(25) }} source={require('../assets/colorIcon/cash.png')} />
-                                <Text style={[styles.textCardEssence, { marginLeft: RFValue(5) }]}>{props.item.price}(p/ml)</Text>
+                            <View style={{ width: '33%', flexDirection: 'row', justifyContent: 'flex-start', marginRight: RFValue(10),alignItems: 'center', }}>
+                                <Image style={{ width: RFValue(25), height: RFValue(20) }} resizeMode='contain' source={require('../assets/colorIcon/cash.png')} />
+                                <Text style={[styles.textCardEssence, { marginLeft: RFValue(5) }]}>{(props.item.price).toFixed(2)}(p/ml)</Text>
                             </View>
                          
                         </View>

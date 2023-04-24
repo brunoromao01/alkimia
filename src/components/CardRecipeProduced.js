@@ -15,20 +15,43 @@ export default ({ data, saveRating }) => {
     const [showFullRecipe, setShowFullRecipe] = useState(false)
     const datavencimentodescanso = moment(data.createdAt).add(1, 'days').calendar()
     const mesVencimento = moment(data.createdAt).add(data.months, 'months').format('MM/YYYY');
-    var receitas = data.recipe.essences
+    var receita = data.recipe.essences
     var percentuais = data.recipe.percents
     var essenciasepercentuais = []
-    const [gramaTotal, setGramaTotal] = useState(0)
-    const [custoTotal, setCustoTotal] = useState(0)
-
-    var pgPercent = 100 - data.recipe.vg
+    var gramaTotal = 0
+    var custoTotal = 0
+    var pgPercent = 0
+    var pgMl = 0
+    const mlVg = (data.quantity * data.recipe.vg / 100).toFixed(2)   
+    const custoVg = (mlVg * data.recipe.essenceVg.price).toFixed(2)    
+    const gramasVg = (mlVg * 1.26).toFixed(2)   
+    gramaTotal = Number(gramaTotal) + Number(gramasVg)     
+    custoTotal = Number(custoTotal) + Number(custoVg)
+ 
+   
+    pgPercent = 100 - data.recipe.vg
+    pgMl = data.quantity - mlVg
+    var pgCusto = 0
     data.recipe.percents.map((percent) => {
         pgPercent -= percent
+        pgMl -= Number(percent * data.quantity / 100)
     })
+    pgCusto = pgMl * data.recipe.essencePg.price
 
-    receitas.map((element, index) => {
+    const mlPg = pgMl.toFixed(2)
+    const gramasPg = (mlPg * 1.04).toFixed(2)
+    gramaTotal = Number(gramaTotal) + Number(gramasPg)
+    custoTotal = Number(custoTotal) + Number(pgCusto)
+
+    receita.map((element, index) => {
         essenciasepercentuais.push({ essencia: element, percentual: percentuais[index], quantidade: data.quantity })
+        gramaTotal += Number((percentuais[index] * data.quantity / 100) * 1.04)
+        custoTotal += Number((percentuais[index] * data.quantity / 100) * element.price )
+       
     });
+
+
+
 
     return (
         <View style={styles.cardEssence}>
@@ -40,37 +63,41 @@ export default ({ data, saveRating }) => {
                 showFullRecipe ?
                     <View>
                         <View style={{ flexDirection: 'row', backgroundColor: '#fafafa', paddingVertical: RFValue(5) }}>
-                            <View style={{ width: '44%', justifyContent: 'center', alignItems: 'flex-start' }}><Text style={styles.textCardEssence}>Ingrediente</Text></View>
-                            <View style={{ width: '14%', justifyContent: 'center', alignItems: 'center' }}><Text style={styles.textCardEssence}>%</Text></View>
-                            <View style={{ width: '14%', justifyContent: 'center', alignItems: 'center' }}><Text style={styles.textCardEssence}>ml</Text></View>
-                            <View style={{ width: '14%', justifyContent: 'center', alignItems: 'center' }}><Text style={styles.textCardEssence}>g</Text></View>
-                            <View style={{ width: '14%', justifyContent: 'center', alignItems: 'center' }}><Text style={styles.textCardEssence}>$</Text></View>
+                            <View style={{ width: '44%', justifyContent: 'center', alignItems: 'flex-start' }}><Text style={styles.textCardEssenceBold}>Ingrediente</Text></View>
+                            <View style={{ width: '14%', justifyContent: 'center', alignItems: 'center' }}><Text style={styles.textCardEssenceBold}>%</Text></View>
+                            <View style={{ width: '14%', justifyContent: 'center', alignItems: 'center' }}><Text style={styles.textCardEssenceBold}>ml</Text></View>
+                            <View style={{ width: '14%', justifyContent: 'center', alignItems: 'center' }}><Text style={styles.textCardEssenceBold}>g</Text></View>
+                            <View style={{ width: '14%', justifyContent: 'center', alignItems: 'center' }}><Text style={styles.textCardEssenceBold}>$</Text></View>
 
                         </View>
+
+                        {/* VG */}
                         <View style={{ flexDirection: 'row', backgroundColor: '#fafafa', }}>
                             <View style={{ width: '44%', justifyContent: 'center', alignItems: 'flex-start' }}>
                                 <Text style={styles.textCardEssence}>VG</Text></View>
                             <View style={{ width: '14%', justifyContent: 'center', alignItems: 'center' }}>
                                 <Text style={styles.textCardEssence}>{data.recipe.vg}</Text></View>
                             <View style={{ width: '14%', justifyContent: 'center', alignItems: 'center' }}>
-                                <Text style={styles.textCardEssence}>{(data.quantity * data.recipe.vg / 100).toFixed(2)}</Text></View>
+                                <Text style={styles.textCardEssence}>{mlVg}</Text></View>
                             <View style={{ width: '14%', justifyContent: 'center', alignItems: 'center' }}>
-                                <Text style={styles.textCardEssence}>{(data.quantity * data.recipe.vg / 100 * 1.26).toFixed(2)}</Text></View>
+                                <Text style={styles.textCardEssence}>{gramasVg}</Text></View>
                             <View style={{ width: '14%', justifyContent: 'center', alignItems: 'center' }}>
-                                <Text style={styles.textCardEssence}>$</Text></View>
+                                <Text style={styles.textCardEssence}>{custoVg}</Text></View>
 
                         </View>
+
+                        {/* PG */}
                         <View style={{ flexDirection: 'row', backgroundColor: '#fafafa', }}>
                             <View style={{ width: '44%', justifyContent: 'center', alignItems: 'flex-start' }}>
                                 <Text style={styles.textCardEssence}>PG</Text></View>
                             <View style={{ width: '14%', justifyContent: 'center', alignItems: 'center' }}>
                                 <Text style={styles.textCardEssence}>{(pgPercent)}</Text></View>
                             <View style={{ width: '14%', justifyContent: 'center', alignItems: 'center' }}>
-                                <Text style={styles.textCardEssence}>{(data.quantity * pgPercent / 100).toFixed(2)}</Text></View>
+                                <Text style={styles.textCardEssence}>{mlPg}</Text></View>
                             <View style={{ width: '14%', justifyContent: 'center', alignItems: 'center' }}>
-                                <Text style={styles.textCardEssence}>{(data.quantity * pgPercent / 100 * 1.04).toFixed(2)}</Text></View>
+                                <Text style={styles.textCardEssence}>{gramasPg}</Text></View>
                             <View style={{ width: '14%', justifyContent: 'center', alignItems: 'center' }}>
-                                <Text style={styles.textCardEssence}>$</Text></View>
+                                <Text style={styles.textCardEssence}>{pgCusto}</Text></View>
 
                         </View>
                         <FlatList
@@ -105,19 +132,19 @@ export default ({ data, saveRating }) => {
                         />
                         <View style={{ flexDirection: 'row', backgroundColor: '#fafafa', paddingBottom: RFValue(5), borderRadius: RFValue(3) }}>
                             <View style={{ width: '44%', justifyContent: 'center', alignItems: 'flex-start' }}>
-
+                            <Text style={styles.textCardEssenceBold}>Total</Text>
                             </View>
                             <View style={{ width: '14%', justifyContent: 'center', alignItems: 'center' }}>
-                                <Text style={styles.textCardEssence}>% total</Text>
+                                <Text style={styles.textCardEssenceBold}>100</Text>
                             </View>
                             <View style={{ width: '14%', justifyContent: 'center', alignItems: 'center' }}>
-                                <Text style={styles.textCardEssence}>ml total </Text>
+                                <Text style={styles.textCardEssenceBold}>{data.quantity} </Text>
                             </View>
                             <View style={{ width: '14%', justifyContent: 'center', alignItems: 'center' }}>
-                                <Text style={styles.textCardEssence}>g total </Text>
+                                <Text style={styles.textCardEssenceBold}>{gramaTotal.toFixed(2)}</Text>
                             </View>
                             <View style={{ width: '14%', justifyContent: 'center', alignItems: 'center' }}>
-                                <Text style={styles.textCardEssence}>$ total </Text>
+                                <Text style={styles.textCardEssenceBold}>{custoTotal.toFixed(2)} </Text>
                             </View>
                         </View>
 
@@ -136,7 +163,7 @@ export default ({ data, saveRating }) => {
                 </View>
                 <View style={{ width: '33%', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-evenly' }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                        <View style={{marginRight: RFValue(3)}}>
+                        <View style={{ marginRight: RFValue(3) }}>
                             <Fontisto name='star' size={RFValue(18)} color={'#FAB32F'} />
                         </View>
                         <SelectDropdown
@@ -144,11 +171,11 @@ export default ({ data, saveRating }) => {
                             onSelect={(selectedItem, index) => {
                                 saveRating(data._id, selectedItem)
                             }}
-                            buttonStyle={{ width: RFValue(20), borderRadius: RFValue(1), height: RFValue(25), borderRadius: RFValue(5), alignItems: 'center', justifyContent: 'center', backgroundColor: 'white' }}
+                            buttonStyle={{ width: RFValue(22), borderRadius: RFValue(1), height: RFValue(25), borderRadius: RFValue(5), alignItems: 'center', justifyContent: 'center', backgroundColor: 'white' }}
                             // buttonTextStyle={{alignSelf: 'center',}}
                             renderCustomizedButtonChild={(selectedItem, index) => {
                                 return (
-                                    <View style={{ width: 20 }}>
+                                    <View style={{ width: RFValue(22) }}>
                                         <Text style={styles.textCardEssence}>{selectedItem ? selectedItem : data.rating}</Text>
                                     </View>
                                 );
@@ -198,6 +225,10 @@ const styles = StyleSheet.create({
     textCardEssence: {
         color: estilo.colors.azul,
         fontFamily: estilo.fonts.padrao
+    },
+    textCardEssenceBold: {
+        color: estilo.colors.azul,
+        fontFamily: estilo.fonts.negrito
     },
     textCardRecipeBottom: {
         color: estilo.colors.azul,
