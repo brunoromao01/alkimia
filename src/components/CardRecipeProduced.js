@@ -13,6 +13,8 @@ import 'moment/locale/pt-br'
 export default ({ data, saveRating }) => {
     const [starRating, setStarRating] = useState(false)
     const [showFullRecipe, setShowFullRecipe] = useState(false)
+    const [configPG, setConfigPg] = useState(0)
+    const [configVG, setConfigVg] = useState(0)
     const datavencimentodescanso = moment(data.createdAt).add(1, 'days').calendar()
     const mesVencimento = moment(data.createdAt).add(data.months, 'months').format('MM/YYYY');
     var receita = data.recipe.essences
@@ -22,13 +24,13 @@ export default ({ data, saveRating }) => {
     var custoTotal = 0
     var pgPercent = 0
     var pgMl = 0
-    const mlVg = (data.quantity * data.recipe.vg / 100).toFixed(2)   
-    const custoVg = (mlVg * data.recipe.essenceVg.price).toFixed(2)    
-    const gramasVg = (mlVg * 1.26).toFixed(2)   
-    gramaTotal = Number(gramaTotal) + Number(gramasVg)     
-    custoTotal = Number(custoTotal) + Number(custoVg)
- 
-   
+    const mlVg = data.quantity * data.recipe.vg / 100
+    const custoVg = mlVg * data.recipe.essenceVg.price
+    const gramasVg = mlVg * Number(configVG)
+    gramaTotal = Number(gramaTotal) + Number(gramasVg)
+    custoTotal = Number(custoTotal) + Number(custoVg)  
+
+
     pgPercent = 100 - data.recipe.vg
     pgMl = data.quantity - mlVg
     var pgCusto = 0
@@ -39,16 +41,31 @@ export default ({ data, saveRating }) => {
     pgCusto = pgMl * data.recipe.essencePg.price
 
     const mlPg = pgMl.toFixed(2)
-    const gramasPg = (mlPg * 1.04).toFixed(2)
+    const gramasPg = (mlPg * Number(configPG)).toFixed(2)
     gramaTotal = Number(gramaTotal) + Number(gramasPg)
     custoTotal = Number(custoTotal) + Number(pgCusto)
 
     receita.map((element, index) => {
         essenciasepercentuais.push({ essencia: element, percentual: percentuais[index], quantidade: data.quantity })
-        gramaTotal += Number((percentuais[index] * data.quantity / 100) * 1.04)
-        custoTotal += Number((percentuais[index] * data.quantity / 100) * element.price )
-       
+        gramaTotal += Number((percentuais[index] * data.quantity / 100) * Number(configPG))
+        custoTotal += Number((percentuais[index] * data.quantity / 100) * element.price)
+
     });
+
+    useFocusEffect(useCallback(() => {
+        try {
+            async function getEssences() {
+                const realm = await getRealm()
+                const config = realm.objects('Config')
+                setConfigPg(config[0].pgDefault)
+                setConfigVg(config[0].vgDefault)
+            } 
+            getEssences()
+        } catch {
+
+        }
+
+    }))
 
 
 
@@ -76,14 +93,13 @@ export default ({ data, saveRating }) => {
                             <View style={{ width: '44%', justifyContent: 'center', alignItems: 'flex-start' }}>
                                 <Text style={styles.textCardEssence}>VG</Text></View>
                             <View style={{ width: '14%', justifyContent: 'center', alignItems: 'center' }}>
-                                <Text style={styles.textCardEssence}>{data.recipe.vg}</Text></View>
+                                <Text style={styles.textCardEssence}>{(data.recipe.vg).toFixed(2)}</Text></View>
                             <View style={{ width: '14%', justifyContent: 'center', alignItems: 'center' }}>
-                                <Text style={styles.textCardEssence}>{mlVg}</Text></View>
+                                <Text style={styles.textCardEssence}>{mlVg.toFixed(2)}</Text></View>
                             <View style={{ width: '14%', justifyContent: 'center', alignItems: 'center' }}>
-                                <Text style={styles.textCardEssence}>{gramasVg}</Text></View>
+                                <Text style={styles.textCardEssence}>{gramasVg.toFixed(2)}</Text></View>
                             <View style={{ width: '14%', justifyContent: 'center', alignItems: 'center' }}>
-                                <Text style={styles.textCardEssence}>{custoVg}</Text></View>
-
+                                <Text style={styles.textCardEssence}>{custoVg.toFixed(2)}</Text></View>
                         </View>
 
                         {/* PG */}
@@ -91,13 +107,13 @@ export default ({ data, saveRating }) => {
                             <View style={{ width: '44%', justifyContent: 'center', alignItems: 'flex-start' }}>
                                 <Text style={styles.textCardEssence}>PG</Text></View>
                             <View style={{ width: '14%', justifyContent: 'center', alignItems: 'center' }}>
-                                <Text style={styles.textCardEssence}>{(pgPercent)}</Text></View>
+                                <Text style={styles.textCardEssence}>{(pgPercent).toFixed(2)}</Text></View>
                             <View style={{ width: '14%', justifyContent: 'center', alignItems: 'center' }}>
                                 <Text style={styles.textCardEssence}>{mlPg}</Text></View>
                             <View style={{ width: '14%', justifyContent: 'center', alignItems: 'center' }}>
                                 <Text style={styles.textCardEssence}>{gramasPg}</Text></View>
                             <View style={{ width: '14%', justifyContent: 'center', alignItems: 'center' }}>
-                                <Text style={styles.textCardEssence}>{pgCusto}</Text></View>
+                                <Text style={styles.textCardEssence}>{pgCusto.toFixed(2)}</Text></View>
 
                         </View>
                         <FlatList
@@ -106,7 +122,7 @@ export default ({ data, saveRating }) => {
 
                                 const quantity = item.quantidade
                                 const ml = item.percentual / 100 * quantity
-                                const g = ml * 1.04
+                                const g = ml * Number(configPG)
                                 const rs = item.essencia.price * ml
 
                                 return (
@@ -132,7 +148,7 @@ export default ({ data, saveRating }) => {
                         />
                         <View style={{ flexDirection: 'row', backgroundColor: '#fafafa', paddingBottom: RFValue(5), borderRadius: RFValue(3) }}>
                             <View style={{ width: '44%', justifyContent: 'center', alignItems: 'flex-start' }}>
-                            <Text style={styles.textCardEssenceBold}>Total</Text>
+                                <Text style={styles.textCardEssenceBold}>Total</Text>
                             </View>
                             <View style={{ width: '14%', justifyContent: 'center', alignItems: 'center' }}>
                                 <Text style={styles.textCardEssenceBold}>100</Text>
@@ -171,11 +187,11 @@ export default ({ data, saveRating }) => {
                             onSelect={(selectedItem, index) => {
                                 saveRating(data._id, selectedItem)
                             }}
-                            buttonStyle={{ width: RFValue(22), borderRadius: RFValue(1), height: RFValue(25), borderRadius: RFValue(5), alignItems: 'center', justifyContent: 'center', backgroundColor: 'white' }}
+                            buttonStyle={{ width: RFValue(25), borderRadius: RFValue(1), height: RFValue(25), borderRadius: RFValue(5), alignItems: 'center', justifyContent: 'center', backgroundColor: 'white' }}
                             // buttonTextStyle={{alignSelf: 'center',}}
                             renderCustomizedButtonChild={(selectedItem, index) => {
                                 return (
-                                    <View style={{ width: RFValue(22) }}>
+                                    <View style={{ width: RFValue(25) }}>
                                         <Text style={styles.textCardEssence}>{selectedItem ? selectedItem : data.rating}</Text>
                                     </View>
                                 );

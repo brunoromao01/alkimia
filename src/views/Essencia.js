@@ -9,6 +9,7 @@ import Header from '../components/Header'
 import { RFValue } from "react-native-responsive-fontsize"
 import CardEssence from '../components/CardEssence'
 import SeparatorFlatlist from '../components/SeparatorFlatlist'
+import AwesomeAlert from 'react-native-awesome-alerts';
 
 export default props => {
     const [modalVisible, setModalVisible] = useState(false);
@@ -16,7 +17,11 @@ export default props => {
     const [modalSuplier, setModalSuplier] = useState(false);
     const [search, setSearch] = useState("")
     const [isEssence, setIsEssence] = useState(true)
-
+    const [showAlertBrandUsed, setShowAlertBrandUsed] = useState(false)
+    const [showAlertSuplierUsed, setShowAlertSuplierUsed] = useState(false)
+    const [showAlertEssenceUsed, setShowAlertEssenceUsed] = useState(false)
+    const [showAlertConfirmation, setShowAlertConfirmation] = useState(false)
+    const [essenceWillDeleted, setEssenceWillDeleted] = useState({})
 
     //marca e fornecedor são os label dos input
     const [marca, setMarca] = useState("*Marca")
@@ -84,24 +89,26 @@ export default props => {
     }, [])
 
     function confirmDeletion(item) {
-        Alert.alert(
-            'Confirmação de exclusão:',
-            'Deseja realmente excluir essa essência ?',
-            [{
-                text: 'Excluir',
-                onPress: () => deleteEssence(item),
-            },
-            {
-                text: 'Cancelar',
-                onPress: () => { },
-                style: 'cancel',
-            },
-            ],
-            {
-                cancelable: true,
-                onDismiss: () => { }
-            },
-        );
+        setShowAlertConfirmation(true)
+        setEssenceWillDeleted(item)
+        // Alert.alert(
+        //     'Confirmação de exclusão:',
+        //     'Deseja realmente excluir essa essência ?',
+        //     [{
+        //         text: 'Excluir',
+        //         onPress: () => deleteEssence(item),
+        //     },
+        //     {
+        //         text: 'Cancelar',
+        //         onPress: () => { },
+        //         style: 'cancel',
+        //     },
+        //     ],
+        //     {
+        //         cancelable: true,
+        //         onDismiss: () => { }
+        //     },
+        // );
     }
 
     // deleta marca
@@ -111,8 +118,7 @@ export default props => {
             const essencias = realm.objects('Essence')
             const marcalocalizada = essencias.filtered(`brand._id == "${item._id}"`).length
             if (marcalocalizada > 0) {
-                Alert.alert('Não é possível a exclusão', 'Marca vinculada a alguma essência')
-                return
+                setShowAlertBrandUsed(true)
             } else {
                 realm.write(() => {
                     realm.delete(item)
@@ -129,9 +135,9 @@ export default props => {
             const realm = await getRealm()
             const receitas = realm.objects('Recipe')
             const essencialocalizada = receitas.filtered(`essences._id == "${item._id}"`).length
+            console.log('aqui')
             if (essencialocalizada > 0) {
-                Alert.alert('Não é possível a exclusão', 'Essência vinculada a alguma receita')
-                return
+                setShowAlertEssenceUsed(true)
             } else {
                 realm.write(() => {
                     realm.delete(item)
@@ -149,8 +155,7 @@ export default props => {
             const essencias = realm.objects('Essence')
             const marcalocalizada = essencias.filtered(`suplier._id == "${item._id}"`).length
             if (marcalocalizada > 0) {
-                Alert.alert('Não é possível a exclusão', 'Fornecedor vinculada a alguma essência')
-                return
+                setShowAlertSuplierUsed(true)
             } else {
                 realm.write(() => {
                     realm.delete(item)
@@ -272,9 +277,9 @@ export default props => {
         setIdUpdated(data._id)
         setNewName(data.name)
         setNewQuantity(data.quantity)
-        setNewPrice(data.price * data.quantity)
-        setNewTaste(data.taste)
-        setFornecedor(data.suplier.name)
+        setNewPrice((data.price * data.quantity).toFixed(2))
+        if (data.taste) setNewTaste(data.taste)
+        if (data.suplier) setFornecedor(data.suplier.name)
         setNewSuplierFull(data.suplier)
         setNewBrandFull(data.brand)
         setMarca(data.brand.name)
@@ -287,6 +292,75 @@ export default props => {
 
             <Header />
             <View style={styles.container} >
+                <AwesomeAlert
+                    show={showAlertBrandUsed}
+                    showProgress={false}
+                    title="Não foi possível excluir"
+                    message={`Essa marca já está vinculada a alguma essência. `}
+                    closeOnTouchOutside={false}
+                    closeOnHardwareBackPress={false}
+                    showCancelButton={false}
+                    showConfirmButton={true}
+                    cancelText="Cancelar."
+                    confirmText="Ok, entendi."
+                    confirmButtonColor={estilo.colors.laranja}
+                    onCancelPressed={() => setShowAlert(false)}
+                    onConfirmPressed={() => {
+                        setShowAlertBrandUsed(false)
+                    }}
+                />
+                <AwesomeAlert
+                    show={showAlertSuplierUsed}
+                    showProgress={false}
+                    title="Não foi possível excluir."
+                    message={`Esse fornecedor já está vinculado a alguma essência. `}
+                    closeOnTouchOutside={false}
+                    closeOnHardwareBackPress={false}
+                    showCancelButton={false}
+                    showConfirmButton={true}
+                    cancelText="Cancelar."
+                    confirmText="Ok, entendi."
+                    confirmButtonColor={estilo.colors.laranja}
+                    onCancelPressed={() => setShowAlert(false)}
+                    onConfirmPressed={() => {
+                        setShowAlertSuplierUsed(false)
+                    }}
+                />
+                <AwesomeAlert
+                    show={showAlertEssenceUsed}
+                    showProgress={false}
+                    title="Não foi possível excluir."
+                    message={`Essa essência já está vinculado a alguma receita. `}
+                    closeOnTouchOutside={false}
+                    closeOnHardwareBackPress={false}
+                    showCancelButton={false}
+                    showConfirmButton={true}
+                    cancelText="Cancelar."
+                    confirmText="Ok, entendi."
+                    confirmButtonColor={estilo.colors.laranja}
+                    onCancelPressed={() => setShowAlert(false)}
+                    onConfirmPressed={() => {
+                        setShowAlertEssenceUsed(false)
+                    }}
+                />
+                <AwesomeAlert
+                    show={showAlertConfirmation}
+                    showProgress={false}
+                    title="Confirmação de exclusão"
+                    message={`Deseja realmente excluir essa essência ? `}
+                    closeOnTouchOutside={false}
+                    closeOnHardwareBackPress={false}
+                    showCancelButton={true}
+                    showConfirmButton={true}
+                    cancelText="Cancelar exclusão."
+                    confirmText="Sim, quero excluir."
+                    confirmButtonColor={estilo.colors.laranja}
+                    onCancelPressed={() => setShowAlertConfirmation(false)}
+                    onConfirmPressed={() => {
+                        setShowAlertConfirmation(false)
+                        deleteEssence(essenceWillDeleted)
+                    }}
+                />
                 <View style={{ paddingHorizontal: RFValue(20), marginTop: RFValue(10), marginBottom: RFValue(30) }}>
                     {/* <Button title='todas essencias' onPress={() => showEssences()} />
                     <Button title='todas marcas' onPress={() => showBrands()} /> */}
@@ -316,6 +390,10 @@ export default props => {
                         setNewPrice('')
                         setNewTaste('')
                         setIdUpdated(0)
+                        setPriceEmpty(false)
+                        setBrandEmpty(false)
+                        setNameEmpty(false)
+                        setQuantityEmpty(false)
                         setModalVisible(true)
 
                     }}>
@@ -474,8 +552,6 @@ export default props => {
                                 onChangeText={quantity => {
                                     if (quantity.includes(',')) {
                                         return
-                                    } else if (quantity.includes) {
-
                                     } else {
                                         setNewQuantity(quantity)
                                         setQuantityEmpty(false)
@@ -497,8 +573,12 @@ export default props => {
                                 selectionColor='#ccc'
                                 value={`${newPrice}`}
                                 onChangeText={price => {
-                                    setNewPrice(price)
-                                    setPriceEmpty(false)
+                                    if (price.includes(',')) {
+                                        return
+                                    } else {
+                                        setNewPrice(price)
+                                        setPriceEmpty(false)
+                                    }
                                 }}
                             />
                             {priceEmpty ? <Text style={{ color: '#ccc', width: '90%', alignSelf: 'center' }}>*Informe o preço</Text> : false}
@@ -597,7 +677,13 @@ export default props => {
                         </View>
                         <View style={{ width: '3%', backgroundColor: 'rgba(0,0,0,0.6)' }} />
                     </View>
-                    <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
+                    <TouchableWithoutFeedback onPress={() => {
+                        setPriceEmpty(false)
+                        setBrandEmpty(false)
+                        setNameEmpty(false)
+                        setQuantityEmpty(false)
+                        setModalVisible(false)
+                    }}>
                         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)' }} />
                     </TouchableWithoutFeedback>
                 </Modal>

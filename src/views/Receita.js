@@ -32,6 +32,8 @@ export default props => {
     const [quantityPercentEmpty, setQuantityPercent] = useState(false);
     const [essenceEmpty, setEssenceEmpty] = useState(false);
     const [showAlert, setShowAlert] = useState(false);
+    const [quantityEmpty, setQuantityEmpty] = useState(false);
+    const [showAlertDuplicatedEssence, setShowAlertDuplicatedEssence] = useState(false);
     const [nameRecipe, setNameRecipe] = useState('');
     const [idRecipe, setIdRecipe] = useState(0);
     const [quantityRecipe, setQuantityRecipe] = useState(0);
@@ -43,6 +45,7 @@ export default props => {
     const [pgSelected, setPgSelected] = useState();
     const refNameRecipe = useRef()
     const refQuantityRecipe = useRef()
+    const [step, setStep] = useState(0)
 
 
 
@@ -53,34 +56,46 @@ export default props => {
 
 
     useFocusEffect(useCallback(() => {
-        async function getEssences() {
-            const realm = await getRealm()
-            const ess = realm.objects('Essence')
-            const e = ess.filtered('isEssence == true')
-            setEssences(e)
-            const v = ess.filtered('isEssence == false')
-            setVgpg(e)
-            const r = realm.objects('Recipe')
-            setRecipes(r)
+        try {
+            async function getEssences() {
+                const realm = await getRealm()
+                const config = realm.objects('Config')
+                const s = config[0].stepDefault
+                const ess = realm.objects('Essence')
+                const e = ess.filtered('isEssence == true')
+                setEssences(e)
+                const v = ess.filtered('isEssence == false')
+                setVgpg(e)
+                const r = realm.objects('Recipe')
+                setRecipes(r)
+                setStep(s)
 
-            e.addListener((values) => {
-                setEssences([...values])
-            })
-            r.addListener((values) => {
-                setRecipes([...values])
-            })
-            v.addListener((values) => {
-                setVgpg([...values])
-            })
+                e.addListener((values) => {
+                    setEssences([...values])
+                })
+                r.addListener((values) => {
+                    setRecipes([...values])
+                })
+                v.addListener((values) => {
+                    setVgpg([...values])
+                })
+                config.addListener((values) => {
+                    setStep(values[0].stepDefault)
+                })
 
-            return () => {
-                e.removeAllListeners()
-                r.removeAllListeners
-                v.removeAllListeners
+
+                return () => {
+                    e.removeAllListeners()
+                    r.removeAllListeners()
+                    v.removeAllListeners()
+                    config.removeAllListeners()
+                }
+
             }
-
+            getEssences()
+        } catch (err) {
+            console.log(err)
         }
-        getEssences()
     }, []))
 
     //adicionando esencia e percentual na listagem
@@ -96,8 +111,8 @@ export default props => {
             console.log(essencesWithPercent)
             for (let index = 0; index < essencesWithPercent.length; index++) {
                 if (essencesWithPercent[index].essencia == essenceSelected) {
-                    console.log('já cadastrado')
-                    Alert.alert('Não é possível prosseguir', 'Produto já informado na receita')
+                    setShowAlertDuplicatedEssence(true)
+                    
                     essenciaRepetida = true
                 } else {
                     essenciaRepetida = false
@@ -257,21 +272,31 @@ export default props => {
                 return prev < current ? prev : current;
             });
             console.log('salvar receita com quantidade recomendada')
-            setNewQuantityrecipe(minValue)
-            setShowAlert(true)
-            updateQuantityEssences(recipeWillProduced, minValue)
+            if (minValue == 0) {
+                Alert.alert('Impossível prosseguir', 'Não é possivel produzir nenhuma quantidade. Algumas das essências informadas está zerada')
+
+            } else {
+                setNewQuantityrecipe(minValue)
+                setShowAlert(true)
+                updateQuantityEssences(recipeWillProduced, minValue)
+            }
         } else {
-            console.log('salvar receita com quantidade informada')
-            saveRecipeProduced(quantityRecipe)
-            updateQuantityEssences(recipeWillProduced, quantityRecipe)
+            if (quantityRecipe == 0) {
+                Alert.alert('Impossível prosseguir', 'Não é possivel produzir nenhuma quantidade. Algumas das essências informadas está zerada')
+
+            } else {
+                saveRecipeProduced(quantityRecipe)
+                updateQuantityEssences(recipeWillProduced, quantityRecipe)
+            }
         }
 
     }
 
     async function updateQuantityEssences(recipeWillProduced, quantity) {
+
         const arrPercentuais = [...recipeWillProduced.percents]
         var soma = 0
-        arrPercentuais.map(percent => soma+=percent)
+        arrPercentuais.map(percent => soma += percent)
         arrPercentuais.push(recipeWillProduced.vg)
         arrPercentuais.push(recipeWillProduced.pg - soma)
         //arrPercentuais recebe todos os percentuais das essencias usadas = [essencia1%, essencia2%, ..., vg%, pg%]
@@ -282,15 +307,16 @@ export default props => {
         const realm = await getRealm()
         for (let index = 0; index < arrEssencias.length; index++) {
             try {
-                const essenciaLocalizada = realm.objectForPrimaryKey('Essence',`${arrEssencias[index]._id}`)
+                const essenciaLocalizada = realm.objectForPrimaryKey('Essence', `${arrEssencias[index]._id}`)
                 realm.write(() => {
                     //buscando a essencia no banco pelo id, é descontado a quantidade usada na receita
-                    essenciaLocalizada.quantity = essenciaLocalizada.quantity - (arrPercentuais[index] * quantity /100)
+                    essenciaLocalizada.quantity = essenciaLocalizada.quantity - (arrPercentuais[index] * quantity / 100)
                 })
             } catch (error) {
                 console.log('ERRO: ' + error)
             }
         }
+
     }
 
     async function saveRecipeProduced(quantity) {
@@ -317,6 +343,8 @@ export default props => {
             console.log('ERRO: ' + error)
         }
     }
+
+
 
 
     async function saveNewRecipe() {
@@ -359,6 +387,24 @@ export default props => {
                 <Header />
 
                 <View style={styles.body}>
+                    <AwesomeAlert
+                        show={showAlertDuplicatedEssence}
+                        showProgress={false}
+                        title="Ocorreu um problema"
+                        message={`A essência informada já foi adicionada. Escolha outra ou exclua a essência e adicione novamente com a quantidade correta.`}
+                        closeOnTouchOutside={false}
+                        closeOnHardwareBackPress={false}
+                        showCancelButton={false}
+                        showConfirmButton={true}
+                        cancelText="Cancelar."
+                        confirmText="Ok, farei isso."
+                        confirmButtonColor={estilo.colors.laranja}
+                        onCancelPressed={() => setShowAlert(false)}
+                        onConfirmPressed={() => {
+                            setShowAlertDuplicatedEssence(false)                           
+                        }}
+
+                    />
                     <View style={{ flexDirection: 'row', width: '100%', marginBottom: RFValue(30), paddingHorizontal: RFValue(20) }}>
 
                         <TouchableWithoutFeedback onPress={() => setChangeViewForInsert(true)}>
@@ -407,8 +453,17 @@ export default props => {
                                     activeOutlineColor={estilo.colors.laranja}
                                     selectionColor='#ccc'
                                     value={quantityRecipe}
-                                    onChangeText={q => setQuantityRecipe(q)}
+                                    onChangeText={q => {
+                                        if (q.includes(',')) {
+                                            return
+                                        } else {
+                                            setQuantityEmpty(false)
+                                            setQuantityRecipe(q)
+                                        }
+                                    }}
                                 />
+                                {quantityEmpty ? <Text style={{ color: '#ccc', width: '90%', alignSelf: 'center' }}>*Informe uma quantidade valida</Text> : false}
+
                                 <TextInput
                                     style={styles.inputModal}
                                     mode='outlined'
@@ -440,6 +495,7 @@ export default props => {
                                     onPress={() => {
                                         if (quantityRecipe == undefined || quantityRecipe == '' || quantityRecipe == 0) {
                                             console.log(quantityRecipe)
+                                            setQuantityEmpty(true)
                                             refQuantityRecipe.current.focus();
                                         } else {
                                             console.log('productionAnalysis')
@@ -474,7 +530,7 @@ export default props => {
                                 <Slider
                                     minimumValue={0}
                                     maximumValue={100}
-                                    step={1}
+                                    step={step}
                                     value={range}
                                     onValueChange={setRange}
                                     minimumTrackTintColor={estilo.colors.laranja}
@@ -608,7 +664,13 @@ export default props => {
                                                 activeOutlineColor={estilo.colors.laranja}
                                                 selectionColor='#ccc'
                                                 value={quantidade}
-                                                onChangeText={q => setQuantidade(q)}
+                                                onChangeText={q => {
+                                                    if (q.includes(',')) {
+                                                        return
+                                                    } else {
+                                                        setQuantidade(q)
+                                                    }
+                                                }}
                                             />
                                             {quantityPercentEmpty && !quantidade ? <Text style={{ color: '#ccc' }}>*Digite a quantidade</Text> : false}
                                             <TouchableOpacity
@@ -767,8 +829,9 @@ export default props => {
                                             <TouchableOpacity
                                                 onPress={() => {
                                                     if (vgSelected == undefined || vgSelected == '' || pgSelected == undefined || pgSelected == '') {
-                                                        console.log('vg ou pg vazio')
+                                                        Alert.alert('Dados incompletos', 'Informe Vg ou Pg')
                                                     } else {
+
                                                         saveNewRecipe()
                                                     }
                                                 }}
