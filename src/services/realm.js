@@ -4,7 +4,7 @@ export const getRealm = async () => {
 	return await Realm.open({
 		path: 'juiceApp',
 		schema: [Essence, Brand, Suplier, Recipe, Config, RecipeProduced],
-		schemaVersion: 27
+		schemaVersion: 28
 	})
 }
 
@@ -76,10 +76,9 @@ export const Config = {
 	primaryKey: "_id",
 	properties: {
 		_id: "string",
-		pgDefault: 'double',
-		vgDefault: 'double',
-		stepDefault: 'int'
-
+		pgDefault: {type: 'double', default: 1.04},
+		vgDefault: {type: 'double', default: 1.26},
+		stepDefault: {type: 'int', default: 5},
 	},
 }
 

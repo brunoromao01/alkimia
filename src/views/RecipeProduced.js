@@ -1,5 +1,6 @@
 import React, { useCallback, useState } from 'react'
 import { StyleSheet, View, Text, TouchableWithoutFeedback, FlatList } from 'react-native'
+import { VictoryAxis, VictoryChart, VictoryTheme, VictoryBar, VictoryLabel } from "victory-native";
 import Header from '../components/Header'
 import { getRealm } from '../services/realm'
 import { useFocusEffect } from '@react-navigation/native'
@@ -10,7 +11,10 @@ import CardRecipeProduced from '../components/CardRecipeProduced'
 
 export default props => {
     const [recipesProduced, setRecipesProduced] = useState([])
-    const [changeChartsOrHistoric, setChangeChartsOrHistoric] = useState([])
+    const [changeChartsOrHistoric, setChangeChartsOrHistoric] = useState(false)
+
+    const [total, setTotal] = useState([])
+
 
     useFocusEffect(useCallback(() => {
         async function getRecipes() {
@@ -20,6 +24,55 @@ export default props => {
             r.addListener((values) => {
                 setRecipesProduced([...values])
             })
+
+
+            var recipeProduced = [...r]
+            var essenciaqtde = []
+
+            for (let index = 0; index < recipeProduced.length; index++) {
+                for (let ind = 0; ind < recipeProduced[index].recipe.percents.length; ind++) {
+                    essenciaqtde.push({ name: recipeProduced[index].recipe.essences[ind].name, qtde: recipeProduced[index].recipe.percents[ind] * recipeProduced[index].quantity / 100 })
+                }
+            }
+
+            var namess = []
+            var essenciatotal = []
+            var names1 = []
+
+
+            for (let i = 0; i < essenciaqtde.length; i++) {
+                namess.push(essenciaqtde[i].name)
+            }
+            names1 = [...new Set(namess)]
+
+            for (let e = 0; e < names1.length; e++) {
+                var soma = 0
+                for (let i = 0; i < essenciaqtde.length; i++) {
+
+                    if (names1[e] == essenciaqtde[i].name) {
+                        soma += essenciaqtde[i].qtde
+                    }
+                }
+                essenciatotal.push({ name: names1[e], qtde: soma })
+            }
+
+            essenciatotal.sort(function (a, b) {
+                if (a.qtde < b.qtde) {
+                    return 1;
+                }
+                if (a.qtde > b.qtde) {
+                    return -1;
+                }
+                // a must be equal to b
+                return 0;
+            });
+
+            setTotal(essenciatotal.slice(0, 8))
+
+
+
+
+
             return () => {
                 r.removeAllListeners()
             }
@@ -27,13 +80,14 @@ export default props => {
         getRecipes()
     }, []))
 
+
+
     const saveRating = async (id, star) => {
         const realm = await getRealm()
         const r = realm.objectForPrimaryKey('RecipeProduced', id)
         realm.write(() => {
             r.rating = star
         })
-        console.log(r)
     }
 
 
@@ -41,6 +95,8 @@ export default props => {
         <>
             <Header />
             <View style={styles.container}>
+
+                {/* botao historico - graficos */}
                 <View style={{ flexDirection: 'row', width: '100%', marginVertical: RFValue(20), paddingHorizontal: RFValue(20) }}>
 
                     <TouchableWithoutFeedback onPress={() => setChangeChartsOrHistoric(true)}>
@@ -60,6 +116,7 @@ export default props => {
                     </TouchableWithoutFeedback>
 
                 </View>
+
                 {
                     changeChartsOrHistoric ?
                         <>
@@ -69,9 +126,47 @@ export default props => {
                                 ItemSeparatorComponent={<SeparatorFlatList />}
                                 renderItem={({ item }) => <CardRecipeProduced data={item} saveRating={saveRating} />}
                             />
-                            <View style={{height: RFValue(70)}}></View>
+                            <View style={{ height: RFValue(70) }}></View>
                         </>
-                        : <Text></Text>
+                        :
+                        <View>
+                            {total ?
+                                <View >
+                                    <Text style={styles.textCardEssence}>As 7 essências mais consumidas</Text>
+                                    <View>
+                                        <VictoryChart
+                                            theme={VictoryTheme.material}
+                                            domainPadding={25}
+                                        >
+                                            <VictoryBar
+                                                // data={total.filter(essencia => essencia.qtde >= 30)}
+                                                data={total.sort()}
+                                                x='name' y='qtde'
+                                                alignment="middle"
+                                                labels={({ datum }) => `${Number(datum._y).toFixed(2)}`}
+                                                sortOrder="descending"
+
+                                            />
+                                            <VictoryAxis
+                                                tickFormat={total.name}
+                                                tickLabelComponent={<VictoryLabel angle={-30} textAnchor="end" style={{ fontSize: 8 }} />}
+                                            />
+                                            {/* <VictoryAxis
+                                            dependentAxis
+                                            tickFormat={(x) => (`${x}ml`)}
+                                        /> */}
+
+                                        </VictoryChart>
+                                    </View>
+
+                                </View>
+
+                                : false
+
+                            }
+
+
+                        </View>
                 }
 
 
@@ -106,7 +201,8 @@ const styles = StyleSheet.create({
     },
     textCardEssence: {
         color: estilo.colors.azul,
-        fontFamily: estilo.fonts.padrao
+        fontFamily: estilo.fonts.negrito,
+        textAlign: 'center'
     },
     textCardRecipeBottom: {
         color: estilo.colors.azul,

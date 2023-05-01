@@ -1,16 +1,59 @@
 import React, { useState } from 'react'
-import { Text, View, StyleSheet, TouchableWithoutFeedback,Image } from 'react-native'
+import { Text, View, StyleSheet, TouchableWithoutFeedback, Image, ToastAndroid } from 'react-native'
 import { RFValue } from "react-native-responsive-fontsize"
 import estilo from '../estilo'
+import AwesomeAlert from 'react-native-awesome-alerts'
+import { getRealm } from '../services/realm'
 import { Menu, MenuOptions, MenuOption, MenuTrigger } from 'react-native-popup-menu';
 
 export default props => {
     const [showFullCard, setShowFullCard] = useState(false)
-
+    const [showAlertConfirmation, setShowAlertConfirmation] = useState(false)
     const fornecedor = props.item.suplier == null ? '--' : props.item.suplier.name
+
+    const showToast = (message) => {
+        ToastAndroid.showWithGravity(message, ToastAndroid.LONG, ToastAndroid.BOTTOM);
+    }
+
+    // deleta essencia
+    async function deleteEssence() {
+        try {
+            const realm = await getRealm()
+            const receitas = realm.objects('Recipe')
+            const essencialocalizada = receitas.filtered(`essences._id == "${props.item._id}"`).length
+
+            if (essencialocalizada > 0) {
+                showToast('Essência usada em alguma receita, não é possível excluí-la')
+            } else {
+                realm.write(() => {
+                    realm.delete(props.item)
+                })
+            }
+        } catch (error) {
+            console.log(error)
+        }
+    }
 
     return (
         <View style={[styles.cardEssence]}>
+            <AwesomeAlert
+                show={showAlertConfirmation}
+                showProgress={false}
+                title="Confirmação de exclusão"
+                message={`Deseja realmente excluir essa essência ? `}
+                closeOnTouchOutside={false}
+                closeOnHardwareBackPress={false}
+                showCancelButton={true}
+                showConfirmButton={true}
+                cancelText="Cancelar exclusão."
+                confirmText="Sim, quero excluir."
+                confirmButtonColor={estilo.colors.laranja}
+                onCancelPressed={() => setShowAlertConfirmation(false)}
+                onConfirmPressed={() => {
+                    setShowAlertConfirmation(false)
+                    deleteEssence()
+                }}
+            />
 
             <TouchableWithoutFeedback
                 onPress={() => setShowFullCard(!showFullCard)}
@@ -23,14 +66,14 @@ export default props => {
                     <View style={{ width: '30%', alignItems: 'center' }}>
                         <Text style={styles.textCardEssence}>{props.item.brand.name}</Text>
                     </View>
-                    <View style={{ width: '20%', alignItems: 'center', marginRight: RFValue(5) }}>
+                    <View style={{ width: '15%', alignItems: 'flex-end', marginRight: RFValue(5) }}>
                         <Text style={styles.textCardEssence}>{(props.item.quantity).toFixed(2)}</Text>
                     </View>
-                    <View style={{ width: '5%' }}>
+                    <View style={{ width: '5%', alignItems: 'flex-end', }}>
                         <Menu>
                             <MenuTrigger customStyles={{ triggerText: { color: estilo.colors.azul } }} text='>' />
                             <MenuOptions>
-                                <MenuOption onSelect={() => props.confirmDeletion(props.item)}>
+                                <MenuOption onSelect={() => setShowAlertConfirmation(true)}>
                                     <Text style={{ color: 'black' }}>Deletar</Text>
                                 </MenuOption>
                                 <MenuOption onSelect={() => props.updateEssence(props.item)}  >
@@ -39,6 +82,7 @@ export default props => {
                             </MenuOptions>
                         </Menu>
                     </View>
+                    <View style={{ width: '5%'}}/>
 
                 </View>
             </TouchableWithoutFeedback>
@@ -55,11 +99,11 @@ export default props => {
                                 <Image style={{ width: RFValue(20), height: RFValue(20) }} source={require('../assets/colorIcon/strawberry.png')} />
                                 <Text style={[styles.textCardEssence, { marginLeft: RFValue(5) }]} adjustsFontSizeToFit numberOfLines={1}>{props.item.taste ? props.item.taste : '--'}</Text>
                             </View>
-                            <View style={{ width: '33%', flexDirection: 'row', justifyContent: 'flex-start', marginRight: RFValue(10),alignItems: 'center', }}>
+                            <View style={{ width: '33%', flexDirection: 'row', justifyContent: 'flex-end', marginRight: RFValue(10), alignItems: 'center', }}>
                                 <Image style={{ width: RFValue(25), height: RFValue(20) }} resizeMode='contain' source={require('../assets/colorIcon/cash.png')} />
                                 <Text style={[styles.textCardEssence, { marginLeft: RFValue(5) }]}>{(props.item.price).toFixed(2)}(p/ml)</Text>
                             </View>
-                         
+
                         </View>
                     </>
                     : false

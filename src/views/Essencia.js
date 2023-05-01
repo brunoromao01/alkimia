@@ -19,8 +19,8 @@ export default props => {
     const [isEssence, setIsEssence] = useState(true)
     const [showAlertBrandUsed, setShowAlertBrandUsed] = useState(false)
     const [showAlertSuplierUsed, setShowAlertSuplierUsed] = useState(false)
-    const [showAlertEssenceUsed, setShowAlertEssenceUsed] = useState(false)
-    const [showAlertConfirmation, setShowAlertConfirmation] = useState(false)
+
+
     const [essenceWillDeleted, setEssenceWillDeleted] = useState({})
 
     //marca e fornecedor são os label dos input
@@ -48,24 +48,32 @@ export default props => {
     const [brandEmpty, setBrandEmpty] = useState(false)
     const [quantityEmpty, setQuantityEmpty] = useState(false)
     const [priceEmpty, setPriceEmpty] = useState(false)
+    const [essenceOrder, setEssenceOrder] = useState(true)
+    const [brandOrder, setBrandOrder] = useState(false)
+    const [quantityOrder, setQuantityOrder] = useState(false)
 
 
     //sobe os dados para os usestates ao carregar a pagina
     useEffect(() => {
         try {
             async function loadSchema() {
+                var order = ''
+                if (essenceOrder) order = 'name'
+                if (brandOrder) order = 'brand.name'
+                if (quantityOrder) order = 'quantity'
                 const realm = await getRealm()
                 const e = realm.objects('Essence')
+                const essencesOrdered = order == 'name' || order == 'brand.name' ? e.sorted(order, false) : e.sorted(order, true)
                 const b = realm.objects('Brand')
                 const s = realm.objects('Suplier')
                 // realm.write(() => {
                 //     realm.deleteAll()
                 // })
 
-                setEssences(e)
+                setEssences(essencesOrdered)
                 setBrands(b)
                 setSupliers(s)
-                e.addListener((values) => {
+                essencesOrdered.addListener((values) => {
                     setEssences([...values])
                 })
                 b.addListener((values) => {
@@ -76,7 +84,7 @@ export default props => {
                 })
 
                 return () => {
-                    e.removeAllListeners()
+                    essencesOrdered.removeAllListeners()
                     b.removeAllListeners()
                     s.removeAllListeners()
                 }
@@ -86,30 +94,29 @@ export default props => {
             console.log(error)
         }
 
-    }, [])
+    }, [essenceOrder, brandOrder, quantityOrder])
 
-    function confirmDeletion(item) {
-        setShowAlertConfirmation(true)
-        setEssenceWillDeleted(item)
-        // Alert.alert(
-        //     'Confirmação de exclusão:',
-        //     'Deseja realmente excluir essa essência ?',
-        //     [{
-        //         text: 'Excluir',
-        //         onPress: () => deleteEssence(item),
-        //     },
-        //     {
-        //         text: 'Cancelar',
-        //         onPress: () => { },
-        //         style: 'cancel',
-        //     },
-        //     ],
-        //     {
-        //         cancelable: true,
-        //         onDismiss: () => { }
-        //     },
-        // );
-    }
+    useEffect(() => {
+        try {
+            async function loadSchema2() {
+                const realm = await getRealm()
+                const e = realm.objects('Essence')
+                const essencesBySearch = e.filtered(`name CONTAINS '${search}' || brand.name CONTAINS '${search}' `)
+                setEssences(essencesBySearch)
+                essencesBySearch.addListener((values) => {
+                    setEssences([...values])
+                })
+                return () => {
+                    essencesBySearch.removeAllListeners()
+                }
+            }
+            loadSchema2()
+        } catch (error) {
+            console.log(error)
+        }
+
+    },[search])
+
 
     // deleta marca
     async function deleteBrand(item) {
@@ -129,24 +136,7 @@ export default props => {
         }
     }
 
-    // deleta essencia
-    async function deleteEssence(item) {
-        try {
-            const realm = await getRealm()
-            const receitas = realm.objects('Recipe')
-            const essencialocalizada = receitas.filtered(`essences._id == "${item._id}"`).length
-            console.log('aqui')
-            if (essencialocalizada > 0) {
-                setShowAlertEssenceUsed(true)
-            } else {
-                realm.write(() => {
-                    realm.delete(item)
-                })
-            }
-        } catch (error) {
-            console.log(error)
-        }
-    }
+
 
     // deleta fornecedor
     async function deleteSuplier(item) {
@@ -243,7 +233,6 @@ export default props => {
             var status = idUpdated == 0 ? 'never' : 'modified'
             var id = idUpdated == 0 ? `${uuid()}` : idUpdated
             const fornecedor = newSuplierFull._id ? newSuplierFull : null
-            console.log(fornecedor)
 
             try {
                 realm.write(() => {
@@ -257,7 +246,6 @@ export default props => {
                         suplier: fornecedor,
                         isEssence: isEssence
                     }, status)
-                    console.log(newSuplierFull)
                 })
                 setMarca('*Marca')
                 setFornecedor('Fornecedor')
@@ -274,13 +262,16 @@ export default props => {
 
     //Ao clicar no trigger Editar (manda o item do card = a essencia a ser editada)
     function updateEssence(data) {
+        console.log(data._id)
         setIdUpdated(data._id)
         setNewName(data.name)
-        setNewQuantity(data.quantity)
+        setNewQuantity(data.quantity.toFixed(2))
         setNewPrice((data.price * data.quantity).toFixed(2))
         if (data.taste) setNewTaste(data.taste)
-        if (data.suplier) setFornecedor(data.suplier.name)
-        setNewSuplierFull(data.suplier)
+        if (data.suplier) {
+            setFornecedor(data.suplier.name)
+            setNewSuplierFull(data.suplier)
+        }
         setNewBrandFull(data.brand)
         setMarca(data.brand.name)
         setModalVisible(true)
@@ -326,41 +317,8 @@ export default props => {
                         setShowAlertSuplierUsed(false)
                     }}
                 />
-                <AwesomeAlert
-                    show={showAlertEssenceUsed}
-                    showProgress={false}
-                    title="Não foi possível excluir."
-                    message={`Essa essência já está vinculado a alguma receita. `}
-                    closeOnTouchOutside={false}
-                    closeOnHardwareBackPress={false}
-                    showCancelButton={false}
-                    showConfirmButton={true}
-                    cancelText="Cancelar."
-                    confirmText="Ok, entendi."
-                    confirmButtonColor={estilo.colors.laranja}
-                    onCancelPressed={() => setShowAlert(false)}
-                    onConfirmPressed={() => {
-                        setShowAlertEssenceUsed(false)
-                    }}
-                />
-                <AwesomeAlert
-                    show={showAlertConfirmation}
-                    showProgress={false}
-                    title="Confirmação de exclusão"
-                    message={`Deseja realmente excluir essa essência ? `}
-                    closeOnTouchOutside={false}
-                    closeOnHardwareBackPress={false}
-                    showCancelButton={true}
-                    showConfirmButton={true}
-                    cancelText="Cancelar exclusão."
-                    confirmText="Sim, quero excluir."
-                    confirmButtonColor={estilo.colors.laranja}
-                    onCancelPressed={() => setShowAlertConfirmation(false)}
-                    onConfirmPressed={() => {
-                        setShowAlertConfirmation(false)
-                        deleteEssence(essenceWillDeleted)
-                    }}
-                />
+
+
                 <View style={{ paddingHorizontal: RFValue(20), marginTop: RFValue(10), marginBottom: RFValue(30) }}>
                     {/* <Button title='todas essencias' onPress={() => showEssences()} />
                     <Button title='todas marcas' onPress={() => showBrands()} /> */}
@@ -390,6 +348,7 @@ export default props => {
                         setNewPrice('')
                         setNewTaste('')
                         setIdUpdated(0)
+                        setIsEssence(true)
                         setPriceEmpty(false)
                         setBrandEmpty(false)
                         setNameEmpty(false)
@@ -408,16 +367,37 @@ export default props => {
                 {
                     essences ?
                         <View style={{ width: '100%', flexDirection: 'row' }}>
-                            <View style={{ width: '45%' }}><Text style={{ marginLeft: RFValue(10) }}>Essência</Text></View>
-                            <View style={{ width: '40%', alignItems: 'center' }}><Text>Marca</Text></View>
-                            <View style={{ width: '15%' }}><Text>Qtde</Text></View>
+                            <TouchableWithoutFeedback onPress={() => {
+                                setEssenceOrder(true)
+                                setBrandOrder(false)
+                                setQuantityOrder(false)
+                            }}>
+                                <View style={{ width: '45%' }}>
+                                    <Text style={{ marginLeft: RFValue(10), color: 'black', fontWeight: essenceOrder ? 'bold' : 'regular' }}>Essência</Text>
+                                </View>
+                            </TouchableWithoutFeedback>
+                            <TouchableWithoutFeedback onPress={() => {
+                                setBrandOrder(true)
+                                setEssenceOrder(false)
+                                setQuantityOrder(false)
+                            }}>
+                                <View style={{ width: '30%', alignItems: 'center' }}><Text style={{ color: 'black', fontWeight: brandOrder ? 'bold' : 'regular' }}>Marca</Text></View>
+                            </TouchableWithoutFeedback>
+                            <TouchableWithoutFeedback onPress={() => {
+                                setQuantityOrder(true)
+                                setBrandOrder(false)
+                                setEssenceOrder(false)
+                            }}>
+                                <View style={{ width: '15%', alignItems: 'flex-end', paddingRight: RFValue(10) }}><Text style={{ color: 'black', fontWeight: quantityOrder ? 'bold' : 'regular' }}>Qtde</Text></View>
+                            </TouchableWithoutFeedback>
+                            <View style={{ width: '10%' }} />
                         </View>
                         : false
                 }
                 <FlatList
                     data={essences}
                     keyExtractor={item => item._id}
-                    renderItem={({ item }) => <CardEssence updateEssence={updateEssence} confirmDeletion={confirmDeletion} item={item} />}
+                    renderItem={({ item }) => <CardEssence updateEssence={updateEssence} item={item} />}
                     ItemSeparatorComponent={<SeparatorFlatlist />}
                 />
 

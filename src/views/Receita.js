@@ -1,5 +1,6 @@
 import React, { useCallback, useState } from 'react'
-import { StyleSheet, View, Text, Dimensions, TouchableOpacity, Alert, TouchableWithoutFeedback, Modal, FlatList, Button } from 'react-native'
+import { StyleSheet, View, Text, Dimensions, TouchableOpacity, Alert, TouchableWithoutFeedback, Modal, FlatList, ToastAndroid } from 'react-native'
+import { Root, Toast } from 'react-native-popup-confirm-toast'
 import AwesomeAlert from 'react-native-awesome-alerts';
 import { TextInput } from 'react-native-paper'
 import SelectDropdown from 'react-native-select-dropdown'
@@ -45,7 +46,11 @@ export default props => {
     const [pgSelected, setPgSelected] = useState();
     const refNameRecipe = useRef()
     const refQuantityRecipe = useRef()
+
     const [step, setStep] = useState(0)
+    const [showAlertPgOrVgEmpty, setShowAlertPgOrVgEmpty] = useState(false)
+    const [showAlertEssenceWithoutStock, setShowAlertEssenceWithoutStock] = useState(false)
+
 
 
 
@@ -112,7 +117,7 @@ export default props => {
             for (let index = 0; index < essencesWithPercent.length; index++) {
                 if (essencesWithPercent[index].essencia == essenceSelected) {
                     setShowAlertDuplicatedEssence(true)
-                    
+
                     essenciaRepetida = true
                 } else {
                     essenciaRepetida = false
@@ -173,20 +178,50 @@ export default props => {
         if (essencesFiltered.length == 0) setShowButtonSaveRecipe(true)
     }
 
-    const editingRecipe = ({ name, essences, percents, vg, _id, essenceVg, essencePg }) => {
-        setEssencesWithPercent([])
-        essences.map((essence, ind) => {
-            setEssencesWithPercent(old => [...old, { essencia: essence, percent: percents[ind] }])
-        })
-        setPgSelected(essencePg)
-        setVgSelected(essenceVg)
-        setNameRecipe(name)
-        setRange(vg)
-        setEssencesList(essences)
-        setPercents(percents)
-        setShowButtonSaveRecipe(false)
-        setChangeViewForInsert(true)
-        setIdRecipe(_id)
+    // deleta marca
+    async function deleteRecipe(item) {
+        try {
+            const realm = await getRealm()
+            const recitasProduzidas = realm.objects('RecipeProduced')
+            const receitaLocalizada = recitasProduzidas.filtered(`recipe._id == "${item._id}"`).length
+            if (receitaLocalizada > 0) {
+
+            } else {
+                realm.write(() => {
+                    realm.delete(item)
+                })
+            }
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
+    const editingRecipe = async ({ name, essences, percents, vg, _id, essenceVg, essencePg }) => {
+        try {
+            const realm = await getRealm()
+            const recipeProduced = realm.objects('RecipeProduced')
+            const receitalocalizada = recipeProduced.filtered(`recipe._id == "${_id}"`).length
+            if (receitalocalizada > 0) {
+                showToast('Receita já produzida, não é possível editá-la.')
+            } else {
+                setEssencesWithPercent([])
+                essences.map((essence, ind) => {
+                    setEssencesWithPercent(old => [...old, { essencia: essence, percent: percents[ind] }])
+                })
+                setPgSelected(essencePg)
+                setVgSelected(essenceVg)
+                setNameRecipe(name)
+                setRange(vg)
+                setEssencesList(essences)
+                setPercents(percents)
+                setShowButtonSaveRecipe(false)
+                setChangeViewForInsert(true)
+                setIdRecipe(_id)
+            }
+        } catch (error) {
+            console.log(error)
+        }
+
     }
 
     const cloningRecipe = ({ name, essences, percents, vg, essenceVg, essencePg }) => {
@@ -205,6 +240,20 @@ export default props => {
         setIdRecipe(0)
     }
 
+    //localizando se receita já foi produzida
+    const searchRecipeAlreadyProduced = async data => {
+        const realm = await getRealm()
+        const recipeProduced = realm.objects('RecipeProduced')
+        const receitalocalizada = recipeProduced.filtered(`recipe._id == "${data._id}"`).length
+        if (receitalocalizada > 0) {
+            console.log(receitalocalizada)
+            return false
+        } else {
+            return true
+        }
+    }
+
+    //deletando receita das receitas cadastradas - é chamado pelo alert. Verifica se já não foi produzida
     const deletingRecipe = async data => {
         try {
             const realm = await getRealm()
@@ -212,8 +261,7 @@ export default props => {
             const recipe = realm.objectForPrimaryKey('Recipe', data._id)
             const receitalocalizada = recipeProduced.filtered(`recipe._id == "${data._id}"`).length
             if (receitalocalizada > 0) {
-                Alert.alert('Não é possível a exclusão', 'Receita já produzida. Não será possível a exclusão')
-                return
+                showToast('Receita já produzida, não é possível excluí-la')
             } else {
                 realm.write(() => {
                     realm.delete(recipe)
@@ -222,6 +270,10 @@ export default props => {
         } catch (error) {
             console.log(error)
         }
+    }
+
+    const showToast = (message) => {
+        ToastAndroid.showWithGravity(message, ToastAndroid.LONG, ToastAndroid.BOTTOM);
     }
 
     const producingRecipe = async data => {
@@ -267,24 +319,27 @@ export default props => {
         }
 
         if (cont < arrQuantidadeEstoque.length) {
+            //Entrando aqui significa que a quantidade inserida é menor do que o possivel
             //minValue é o menor valor do arrDivergencia. Quantidade que será recomendada como maximo possivel para produção
             const minValue = arrDivergencia.reduce(function (prev, current) {
                 return prev < current ? prev : current;
             });
             console.log('salvar receita com quantidade recomendada')
             if (minValue == 0) {
-                Alert.alert('Impossível prosseguir', 'Não é possivel produzir nenhuma quantidade. Algumas das essências informadas está zerada')
-
+                //Entrando aqui significa que a quantidade calculada é 0
+                setShowAlertEssenceWithoutStock(true)
             } else {
+                //Entrando aqui significa que a quantidade recomendada será usada
                 setNewQuantityrecipe(minValue)
                 setShowAlert(true)
                 updateQuantityEssences(recipeWillProduced, minValue)
             }
         } else {
             if (quantityRecipe == 0) {
-                Alert.alert('Impossível prosseguir', 'Não é possivel produzir nenhuma quantidade. Algumas das essências informadas está zerada')
-
+                //Entrando aqui significa que a quantidade informada é 0
+                setShowAlertEssenceWithoutStock(true)
             } else {
+                //Entrando aqui significa que a quantidade informada será usada
                 saveRecipeProduced(quantityRecipe)
                 updateQuantityEssences(recipeWillProduced, quantityRecipe)
             }
@@ -292,6 +347,7 @@ export default props => {
 
     }
 
+    //desconta quantidade usada em cada ingrediente
     async function updateQuantityEssences(recipeWillProduced, quantity) {
 
         const arrPercentuais = [...recipeWillProduced.percents]
@@ -401,10 +457,67 @@ export default props => {
                         confirmButtonColor={estilo.colors.laranja}
                         onCancelPressed={() => setShowAlert(false)}
                         onConfirmPressed={() => {
-                            setShowAlertDuplicatedEssence(false)                           
+                            setShowAlertDuplicatedEssence(false)
                         }}
-
                     />
+                    <AwesomeAlert
+                        show={showAlertEssenceWithoutStock}
+                        showProgress={false}
+                        title="Impossível produzir"
+                        message={`Essa receita não pode ser produzida, algum dos ingredientes está com estoque zerado.`}
+                        closeOnTouchOutside={false}
+                        closeOnHardwareBackPress={false}
+                        showCancelButton={false}
+                        showConfirmButton={true}
+                        cancelText="Cancelar."
+                        confirmText="Ok, entendi."
+                        confirmButtonColor={estilo.colors.laranja}
+                        onCancelPressed={() => setShowAlertEssenceWithoutStock(false)}
+                        onConfirmPressed={() => {
+                            setShowAlertEssenceWithoutStock(false)
+                        }}
+                    />
+                    <AwesomeAlert
+                        show={showAlertPgOrVgEmpty}
+                        showProgress={false}
+                        title="Faltam dados importantes"
+                        message={`VG ou PG não foram informados. Para conseguir salvar ambos devem ser inseridos.`}
+                        closeOnTouchOutside={false}
+                        closeOnHardwareBackPress={false}
+                        showCancelButton={false}
+                        showConfirmButton={true}
+                        cancelText="Cancelar."
+                        confirmText="Ok, entendi."
+                        confirmButtonColor={estilo.colors.laranja}
+                        onCancelPressed={() => setShowAlert(false)}
+                        onConfirmPressed={() => {
+                            setShowAlertPgOrVgEmpty(false)
+                        }}
+                    />
+                    <AwesomeAlert
+                        show={showAlertDuplicatedEssence}
+                        showProgress={false}
+                        title="Essência duplicada"
+                        message={`A essência informada já foi adicionada. Escolha outra ou exclua a essência e adicione novamente com a quantidade correta.`}
+                        closeOnTouchOutside={false}
+                        closeOnHardwareBackPress={false}
+                        showCancelButton={false}
+                        showConfirmButton={true}
+                        cancelText="Cancelar."
+                        confirmText="Ok, farei isso."
+                        confirmButtonColor={estilo.colors.laranja}
+                        onCancelPressed={() => setShowAlert(false)}
+                        onConfirmPressed={() => {
+                            setShowAlertDuplicatedEssence(false)
+                        }}
+                    />
+
+
+
+
+
+
+
                     <View style={{ flexDirection: 'row', width: '100%', marginBottom: RFValue(30), paddingHorizontal: RFValue(20) }}>
 
                         <TouchableWithoutFeedback onPress={() => setChangeViewForInsert(true)}>
@@ -462,7 +575,7 @@ export default props => {
                                         }
                                     }}
                                 />
-                                {quantityEmpty ? <Text style={{ color: '#ccc', width: '90%', alignSelf: 'center' }}>*Informe uma quantidade valida</Text> : false}
+                                {quantityEmpty ? <Text style={{ color: '#ccc', width: '90%', alignSelf: 'center' }}>*Informe uma quantidade válida</Text> : false}
 
                                 <TextInput
                                     style={styles.inputModal}
@@ -829,9 +942,8 @@ export default props => {
                                             <TouchableOpacity
                                                 onPress={() => {
                                                     if (vgSelected == undefined || vgSelected == '' || pgSelected == undefined || pgSelected == '') {
-                                                        Alert.alert('Dados incompletos', 'Informe Vg ou Pg')
+                                                        setShowAlertPgOrVgEmpty(true)
                                                     } else {
-
                                                         saveNewRecipe()
                                                     }
                                                 }}
@@ -869,6 +981,8 @@ export default props => {
                                     }}
 
                                 />
+
+
 
                                 <FlatList
                                     data={recipes}

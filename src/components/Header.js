@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { Text, View, StyleSheet, Dimensions, TouchableWithoutFeedback, Modal, TouchableOpacity } from 'react-native'
+import { VictoryBar, VictoryChart, VictoryTheme } from "victory-native";
 import estilo from '../estilo'
 import Feather from 'react-native-vector-icons/Feather'
 import { RFValue } from 'react-native-responsive-fontsize'
@@ -13,7 +14,7 @@ export default props => {
     const [pgDefault, setPgDefault] = useState(0)
     const [vgDefault, setVgDefault] = useState(0)
     const [stepSlide, setStepSlide] = useState(0)
-    const [config, setConfig] = useState({})
+    const [config, setConfig] = useState({})    
 
     useEffect(() => {
         try {
@@ -73,7 +74,7 @@ export default props => {
             <View style={{ flex: 1, alignItems: 'flex-end', marginRight: RFValue(10) }}>
                 <TouchableWithoutFeedback onPress={() => setModalVisible(true)}>
                     {/* <Image style={{ width: RFValue(25), height: RFValue(20), marginRight: RFValue(20) }} resizeMode='contain' source={require('../assets/tabIcon/setting.png')} /> */}
-                    <Feather name="settings" size={RFValue(24)} color={estilo.colors.laranja} />
+                    <Feather name="settings" size={RFValue(20)} color={estilo.colors.cinza} />
                 </TouchableWithoutFeedback>
             </View>
 

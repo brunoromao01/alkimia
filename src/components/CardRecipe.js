@@ -1,11 +1,13 @@
 import React, { useState } from 'react'
 import { Text, View, StyleSheet, TouchableWithoutFeedback, ScrollView, FlatList } from 'react-native'
 import { RFValue } from "react-native-responsive-fontsize"
+import AwesomeAlert from 'react-native-awesome-alerts';
 import estilo from '../estilo'
 import { Menu, MenuOptions, MenuOption, MenuTrigger } from 'react-native-popup-menu';
 
 export default ({ data, deletingRecipe, producingRecipe, editingRecipe, cloningRecipe }) => {
     const [showFullCard, setShowFullCard] = useState(false)
+    const [showAlertConfirmationExclusion, setShowAlertConfirmationExclusion] = useState(false)
     const essencias = data.essences
     const percents = data.percents
     const vg = data.vg
@@ -14,6 +16,24 @@ export default ({ data, deletingRecipe, producingRecipe, editingRecipe, cloningR
 
     return (
         <View style={[styles.cardEssence]}>
+            <AwesomeAlert
+                show={showAlertConfirmationExclusion}
+                showProgress={false}
+                title="Confirmação de exclusão:"
+                message={`Deseja realmente excluir essa essência ? (esse processo é irreverssível) `}
+                closeOnTouchOutside={false}
+                closeOnHardwareBackPress={false}
+                showCancelButton={true}
+                showConfirmButton={true}
+                cancelText="Cancelar."
+                confirmText="Sim, quero excluir."
+                confirmButtonColor={estilo.colors.laranja}
+                onCancelPressed={() => setShowAlertConfirmationExclusion(false)}
+                onConfirmPressed={() => {
+                    setShowAlertConfirmationExclusion(false)
+                    deletingRecipe(data)
+                }}
+            />
 
             <TouchableWithoutFeedback
                 onPress={() => setShowFullCard(!showFullCard)}
@@ -29,7 +49,7 @@ export default ({ data, deletingRecipe, producingRecipe, editingRecipe, cloningR
                         <Menu>
                             <MenuTrigger customStyles={{ triggerText: { color: estilo.colors.azul } }} text='>' />
                             <MenuOptions>
-                                <MenuOption onSelect={() => deletingRecipe(data)}><Text style={{ color: 'black' }}>Deletar</Text></MenuOption>
+                                <MenuOption onSelect={() => setShowAlertConfirmationExclusion(true)}><Text style={{ color: 'black' }}>Deletar</Text></MenuOption>
                                 <MenuOption onSelect={() => editingRecipe(data)} ><Text style={{ color: 'black' }}>Editar</Text></MenuOption>
                                 <MenuOption onSelect={() => cloningRecipe(data)} ><Text style={{ color: 'black' }}>Clonar</Text></MenuOption>
                                 <MenuOption onSelect={() => producingRecipe(data)} ><Text style={{ color: 'black' }}>Produzir</Text></MenuOption>
@@ -64,7 +84,7 @@ export default ({ data, deletingRecipe, producingRecipe, editingRecipe, cloningR
                                 }
                             />
                         </View>
-                       
+
 
                     </>
                     : false

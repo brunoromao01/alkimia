@@ -2,7 +2,7 @@ import React from 'react'
 import { Dimensions, Image, StyleSheet } from 'react-native'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
 import Essencia from '../views/Essencia'
-import Estoque from '../views/Estoque'
+import RecipeProduced from '../views/RecipeProduced'
 import Marca from '../views/Marca'
 import Receita from '../views/Receita'
 
@@ -12,7 +12,7 @@ export default props => {
 
     return (
         <Tabs.Navigator {...props}
-            initialRouteName={'Receita'}
+            initialRouteName={'RecipeProduced'}
             screenOptions={{
                 tabBarHideOnKeyboard: true,
                 headerShown: false,
@@ -51,12 +51,12 @@ export default props => {
                 }}
             />
             <Tabs.Screen
-                name='Estoque'
-                component={Estoque}
+                name='RecipeProduced'
+                component={RecipeProduced}
                 options={{
                     tabBarIcon: ({ focused, size, color }) => (
-                        focused ? <Image style={styles.imageIcon} source={require('../assets/tabIcon/estoque-pronto3.png')} />
-                        : <Image style={styles.imageIcon2} source={require('../assets/tabIcon/estoque-pronto3.png')} />
+                        focused ? <Image style={styles.imageIcon} source={require('../assets/tabIcon/chart3.png')} />
+                        : <Image style={styles.imageIcon2} source={require('../assets/tabIcon/chart3.png')} />
                     )
                 }}
             />
