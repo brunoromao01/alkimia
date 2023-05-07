@@ -11,13 +11,18 @@ import moment from 'moment'
 import 'moment/locale/pt-br'
 
 export default ({ data, saveRating }) => {
-    const [showFullRecipe, setShowFullRecipe] = useState(true)
+    const [showFullRecipe, setShowFullRecipe] = useState(false)
     const [configPG, setConfigPg] = useState(0)
     const [configVG, setConfigVg] = useState(0)
-    const datavencimentodescanso = moment(data.createdAt).add(1, 'days').calendar()
-    const mesVencimento = moment(data.createdAt).add(data.months, 'months').format('MM/YYYY');
-    var receita = data.recipe.essences
-    var percentuais = data.recipe.percents
+
+    var datavencimentodescanso = 0
+    var mesVencimento = 0
+    if (data.breath > 0) datavencimentodescanso = moment(data.createdAt).add(data.breath, 'days').calendar()
+    if (data.months > 0) mesVencimento = moment(data.createdAt).add(data.months, 'months').format('MM/YYYY');
+
+    var essencias = []
+
+    var percentuais = data.percents
     var essenciasepercentuais = []
     var gramaTotal = 0
     var custoTotal = 0
@@ -29,11 +34,19 @@ export default ({ data, saveRating }) => {
     gramaTotal = Number(gramaTotal) + Number(gramasVg)
     custoTotal = Number(custoTotal) + Number(custoVg)
 
+    for (var ind = 0; ind < data.essencesNames.length; ind++) {
+        essencias.push({
+            name: data.essencesNames[ind],
+            brandName: data.essencesBrandsName[ind],
+            price: data.essencesPrices[ind],
+            quantity: data.essencesQuantity[ind]
+        })
+    }
 
     pgPercent = 100 - data.recipe.vg
     pgMl = data.quantity - mlVg
     var pgCusto = 0
-    data.recipe.percents.map((percent) => {
+    data.percents.map((percent) => {
         pgPercent -= percent
         pgMl -= Number(percent * data.quantity / 100)
     })
@@ -44,27 +57,33 @@ export default ({ data, saveRating }) => {
     gramaTotal = Number(gramaTotal) + Number(gramasPg)
     custoTotal = Number(custoTotal) + Number(pgCusto)
 
-    receita.map((element, index) => {
+    essencias.map((element, index) => {
         essenciasepercentuais.push({ essencia: element, percentual: percentuais[index], quantidade: data.quantity })
         gramaTotal += Number((percentuais[index] * data.quantity / 100) * Number(configPG))
         custoTotal += Number((percentuais[index] * data.quantity / 100) * element.price)
 
     });
 
+
+
+
+
     useFocusEffect(useCallback(() => {
         try {
-            async function getEssences() {
+            async function getConfig() {
                 const realm = await getRealm()
                 const config = realm.objects('Config')
                 setConfigPg(config[0].pgDefault)
                 setConfigVg(config[0].vgDefault)
             }
-            getEssences()
-        } catch {
+            getConfig()
+        } catch (err) {
+            console.log(err)
 
         }
 
     }))
+
 
 
 
@@ -75,10 +94,10 @@ export default ({ data, saveRating }) => {
                 <View style={{ width: '50%' }}>
                     <Text style={styles.textCardRecipe}>{data.recipe.name}</Text>
                 </View>
-                <View style={{ width: '40%' }}>
+                <View style={{ width: '40%', alignItems: 'center' }}>
                     <Text style={styles.textCardRecipe}>{(data.quantity).toFixed(2)}ml</Text>
                 </View>
-                <View style={{ width: '10%', alignItems: 'center',  }}>
+                <View style={{ width: '10%', alignItems: 'center', }}>
                     <TouchableWithoutFeedback onPress={() => setShowFullRecipe(!showFullRecipe)}>
                         <Fontisto name='angle-down' size={RFValue(15)} color={estilo.colors.azul} />
                     </TouchableWithoutFeedback>
@@ -99,7 +118,7 @@ export default ({ data, saveRating }) => {
                         {/* VG */}
                         <View style={{ flexDirection: 'row', backgroundColor: '#fafafa', }}>
                             <View style={{ width: '44%', justifyContent: 'center', alignItems: 'flex-start' }}>
-                                <Text style={styles.textCardEssence}>VG - {data.recipe.essenceVg.brand.name}</Text></View>
+                                <Text style={styles.textCardEssence}>VG ({data.recipe.essenceVg.brand.name})</Text></View>
                             <View style={{ width: '14%', justifyContent: 'center', alignItems: 'center' }}>
                                 <Text style={styles.textCardEssence}>{data.recipe.vg}</Text></View>
                             <View style={{ width: '14%', justifyContent: 'center', alignItems: 'center' }}>
@@ -113,7 +132,7 @@ export default ({ data, saveRating }) => {
                         {/* PG */}
                         <View style={{ flexDirection: 'row', backgroundColor: '#fafafa', }}>
                             <View style={{ width: '44%', justifyContent: 'center', alignItems: 'flex-start' }}>
-                                <Text style={styles.textCardEssence}>PG - {data.recipe.essencePg.brand.name}</Text></View>
+                                <Text style={styles.textCardEssence}>PG ({data.recipe.essencePg.brand.name})</Text></View>
                             <View style={{ width: '14%', justifyContent: 'center', alignItems: 'center' }}>
                                 <Text style={styles.textCardEssence}>{pgPercent}</Text></View>
                             <View style={{ width: '14%', justifyContent: 'center', alignItems: 'center' }}>
@@ -136,7 +155,7 @@ export default ({ data, saveRating }) => {
                                 return (
                                     <View style={{ flexDirection: 'row', backgroundColor: '#fafafa' }}>
                                         <View style={{ width: '44%', justifyContent: 'center', alignItems: 'flex-start' }}>
-                                            <Text adjustsFontSizeToFit numberOfLines={1} style={styles.textCardEssence}>{item.essencia.name} - {item.essencia.brand.name} </Text>
+                                            <Text adjustsFontSizeToFit numberOfLines={1} style={styles.textCardEssence}>{item.essencia.name} ({item.essencia.brandName})</Text>
                                         </View>
                                         <View style={{ width: '14%', justifyContent: 'center', alignItems: 'center' }}>
                                             <Text style={styles.textCardEssence}>{item.percentual} </Text>
@@ -154,6 +173,7 @@ export default ({ data, saveRating }) => {
                                 )
                             }}
                         />
+                        {/* totais*/}
                         <View style={{ flexDirection: 'row', backgroundColor: '#fafafa', paddingBottom: RFValue(5), borderRadius: RFValue(3) }}>
                             <View style={{ width: '44%', justifyContent: 'center', alignItems: 'flex-start' }}>
                                 <Text style={styles.textCardEssenceBold}>Total</Text>
@@ -175,15 +195,15 @@ export default ({ data, saveRating }) => {
                     </View>
                     : false
             }
-
+            {/* bottom card = descanso, vencimento, rating */}
             <View style={{ flexDirection: 'row', alignItems: 'center', width: '100%', marginTop: RFValue(5) }}>
-                <View style={{ width: '45%', flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}>
+                <View style={{ width: '45%', flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'center' }}>
                     <Image style={{ width: RFValue(25), height: RFValue(25) }} source={require('../assets/colorIcon/day.png')} />
-                    <Text style={[styles.textCardRecipeBottom, { marginLeft: RFValue(5) }]} adjustsFontSizeToFit numberOfLines={1}>{datavencimentodescanso}</Text>
+                    <Text style={[styles.textCardRecipeBottom, { marginLeft: RFValue(5) }]} adjustsFontSizeToFit numberOfLines={1}>{datavencimentodescanso != 0 ? datavencimentodescanso : '--'}</Text>
                 </View>
-                <View style={{ width: '30%', flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', marginLeft: RFValue(5) }}>
+                <View style={{ width: '30%', flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'center', marginLeft: RFValue(5) }}>
                     <Image style={{ width: RFValue(25), height: RFValue(25) }} source={require('../assets/colorIcon/schedule.png')} />
-                    <Text style={[styles.textCardRecipeBottom, { marginLeft: RFValue(5) }]}>{mesVencimento}</Text>
+                    <Text style={[styles.textCardRecipeBottom, { marginLeft: RFValue(5) }]}>{mesVencimento != 0 ? mesVencimento : '--'}</Text>
                 </View>
                 <View style={{ width: '25%', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-evenly' }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>

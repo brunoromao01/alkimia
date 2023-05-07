@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Text, View, StyleSheet, Dimensions, TouchableWithoutFeedback, Modal, TouchableOpacity } from 'react-native'
+import { Text, View, StyleSheet, Dimensions, TouchableWithoutFeedback, Modal, TouchableOpacity, Image } from 'react-native'
 import { VictoryBar, VictoryChart, VictoryTheme } from "victory-native";
 import estilo from '../estilo'
 import Feather from 'react-native-vector-icons/Feather'
@@ -7,6 +7,7 @@ import { RFValue } from 'react-native-responsive-fontsize'
 import { TextInput } from 'react-native-paper'
 import { v4 as uuid } from 'uuid'
 import { getRealm } from '../services/realm'
+import Settings from '../assets/tabIcon/settings.svg'
 
 export default props => {
 
@@ -14,7 +15,9 @@ export default props => {
     const [pgDefault, setPgDefault] = useState(0)
     const [vgDefault, setVgDefault] = useState(0)
     const [stepSlide, setStepSlide] = useState(0)
-    const [config, setConfig] = useState({})    
+    const [breath, setBreath] = useState(0)
+    const [months, setMonths] = useState(0)
+    const [config, setConfig] = useState({})
 
     useEffect(() => {
         try {
@@ -32,10 +35,13 @@ export default props => {
                         console.log(confi)
                     })
                 }
-                setConfig(conf)                
+                setConfig(conf)
                 setPgDefault(conf[0].pgDefault)
                 setVgDefault(conf[0].vgDefault)
                 setStepSlide(conf[0].stepDefault)
+                setBreath(conf[0].breathDefault)
+                setMonths(conf[0].monthDefault)
+
 
                 conf.addListener((values) => {
                     setConfig([...values])
@@ -58,23 +64,26 @@ export default props => {
                 _id: config[0]._id,
                 pgDefault: Number(pgDefault),
                 vgDefault: Number(vgDefault),
-                stepDefault: Number(stepSlide)
-            },'modified')            
+                stepDefault: Number(stepSlide),
+                breathDefault: Number(breath),
+                monthDefault: Number(months)
+            }, 'modified')
         )
         setModalVisible(false)
     }
 
     return (
         <View style={styles.container}>
-            <View style={{ flex: 1, }}></View>
-            <View style={{ flex: 4, alignItems: 'center', justifyContent: 'center', }}>
-                <Text style={styles.title}>ALKIMIA</Text>
+            <View style={{ width: '15%', }}></View>
+            <View style={{ width: '70%', alignItems: 'center', justifyContent: 'center', }}>
+                <Image source={require('../assets/tabIcon/logo2.png')} resizeMode='contain' style={{ width: '100%', height: RFValue(40) }} />
             </View>
 
-            <View style={{ flex: 1, alignItems: 'flex-end', marginRight: RFValue(10) }}>
+            <View style={{ width: '15%', alignItems: 'flex-end', paddingRight: RFValue(10) }}>
                 <TouchableWithoutFeedback onPress={() => setModalVisible(true)}>
-                    {/* <Image style={{ width: RFValue(25), height: RFValue(20), marginRight: RFValue(20) }} resizeMode='contain' source={require('../assets/tabIcon/setting.png')} /> */}
-                    <Feather name="settings" size={RFValue(20)} color={estilo.colors.cinza} />
+
+                    <Settings width={RFValue(23)} height={RFValue(23)} />
+
                 </TouchableWithoutFeedback>
             </View>
 
@@ -135,6 +144,32 @@ export default props => {
                             selectionColor='#ccc'
                             value={`${stepSlide}`}
                             onChangeText={step => setStepSlide(step)}
+                        />
+                        <TextInput
+                            style={styles.inputModal}
+                            mode='outlined'
+                            keyboardType='decimal-pad'
+                            label="Dias de descanso"
+                            placeholder='Ex: 14'
+                            placeholderTextColor={'#999'}
+                            outlineColor={estilo.colors.azul}
+                            activeOutlineColor={estilo.colors.laranja}
+                            selectionColor='#ccc'
+                            value={`${breath}`}
+                            onChangeText={breath => setBreath(breath)}
+                        />
+                        <TextInput
+                            style={styles.inputModal}
+                            mode='outlined'
+                            keyboardType='decimal-pad'
+                            label="Meses de vencimento"
+                            placeholder='Ex: 4'
+                            placeholderTextColor={'#999'}
+                            outlineColor={estilo.colors.azul}
+                            activeOutlineColor={estilo.colors.laranja}
+                            selectionColor='#ccc'
+                            value={`${months}`}
+                            onChangeText={months => setMonths(months)}
                         />
                         <TouchableOpacity
                             onPress={() => saveConfig()}

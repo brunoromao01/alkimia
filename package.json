@@ -28,6 +28,7 @@
     "react-native-select-dropdown": "^2.0.4",
     "react-native-status-bar-height": "^2.6.0",
     "react-native-svg": "^13.9.0",
+    "react-native-svg-transformer": "^1.0.0",
     "react-native-swiper": "^1.6.0",
     "react-native-toast-message": "^2.1.5",
     "react-native-toast-notifications": "^3.3.1",

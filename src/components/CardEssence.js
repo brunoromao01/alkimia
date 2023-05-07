@@ -100,8 +100,8 @@ export default props => {
                                 <Text style={[styles.textCardEssence, { marginLeft: RFValue(5) }]} adjustsFontSizeToFit numberOfLines={1}>{props.item.taste ? props.item.taste : '--'}</Text>
                             </View>
                             <View style={{ width: '33%', flexDirection: 'row', justifyContent: 'flex-end', marginRight: RFValue(10), alignItems: 'center', }}>
-                                <Image style={{ width: RFValue(25), height: RFValue(20) }} resizeMode='contain' source={require('../assets/colorIcon/cash.png')} />
-                                <Text style={[styles.textCardEssence, { marginLeft: RFValue(5) }]}>{(props.item.price).toFixed(2)}(p/ml)</Text>
+                                <Image style={{ width: RFValue(25), height: RFValue(20) }} resizeMode='contain' source={require('../assets/colorIcon/dollar.png')} />
+                                <Text style={[styles.textCardEssence, { marginLeft: RFValue(5), marginRight: RFValue(10) }]}>{(props.item.price).toFixed(2)}(p/ml)</Text>
                             </View>
 
                         </View>

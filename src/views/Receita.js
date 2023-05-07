@@ -66,6 +66,8 @@ export default props => {
                 const realm = await getRealm()
                 const config = realm.objects('Config')
                 const s = config[0].stepDefault
+                const b = config[0].breathDefault
+                const m = config[0].monthDefault
                 const ess = realm.objects('Essence')
                 const e = ess.filtered('isEssence == true')
                 setEssences(e)
@@ -74,6 +76,8 @@ export default props => {
                 const r = realm.objects('Recipe')
                 setRecipes(r)
                 setStep(s)
+                setBreath(b)
+                setMonths(m)
 
                 e.addListener((values) => {
                     setEssences([...values])
@@ -84,8 +88,10 @@ export default props => {
                 v.addListener((values) => {
                     setVgpg([...values])
                 })
-                config.addListener((values) => {
+                config.addListener((values) => {                    
                     setStep(values[0].stepDefault)
+                    setBreath(values[0].breathDefault)
+                    setMonths(values[0].monthDefault)
                 })
 
 
@@ -198,26 +204,19 @@ export default props => {
 
     const editingRecipe = async ({ name, essences, percents, vg, _id, essenceVg, essencePg }) => {
         try {
-            const realm = await getRealm()
-            const recipeProduced = realm.objects('RecipeProduced')
-            const receitalocalizada = recipeProduced.filtered(`recipe._id == "${_id}"`).length
-            if (receitalocalizada > 0) {
-                showToast('Receita já produzida, não é possível editá-la.')
-            } else {
-                setEssencesWithPercent([])
-                essences.map((essence, ind) => {
-                    setEssencesWithPercent(old => [...old, { essencia: essence, percent: percents[ind] }])
-                })
-                setPgSelected(essencePg)
-                setVgSelected(essenceVg)
-                setNameRecipe(name)
-                setRange(vg)
-                setEssencesList(essences)
-                setPercents(percents)
-                setShowButtonSaveRecipe(false)
-                setChangeViewForInsert(true)
-                setIdRecipe(_id)
-            }
+            setEssencesWithPercent([])
+            essences.map((essence, ind) => {
+                setEssencesWithPercent(old => [...old, { essencia: essence, percent: percents[ind] }])
+            })
+            setPgSelected(essencePg)
+            setVgSelected(essenceVg)
+            setNameRecipe(name)
+            setRange(vg)
+            setEssencesList(essences)
+            setPercents(percents)
+            setShowButtonSaveRecipe(false)
+            setChangeViewForInsert(true)
+            setIdRecipe(_id)
         } catch (error) {
             console.log(error)
         }
@@ -239,22 +238,11 @@ export default props => {
         setChangeViewForInsert(true)
         setIdRecipe(0)
     }
-
-    //localizando se receita já foi produzida
-    const searchRecipeAlreadyProduced = async data => {
-        const realm = await getRealm()
-        const recipeProduced = realm.objects('RecipeProduced')
-        const receitalocalizada = recipeProduced.filtered(`recipe._id == "${data._id}"`).length
-        if (receitalocalizada > 0) {
-            console.log(receitalocalizada)
-            return false
-        } else {
-            return true
-        }
-    }
+ 
 
     //deletando receita das receitas cadastradas - é chamado pelo alert. Verifica se já não foi produzida
     const deletingRecipe = async data => {
+        console.log(data)
         try {
             const realm = await getRealm()
             const recipeProduced = realm.objects('RecipeProduced')
@@ -278,6 +266,8 @@ export default props => {
 
     const producingRecipe = async data => {
         setShowModalProduce(true)
+        console.log('producingRecipe')
+        console.log(typeof data)
         setRecipeWillProduced(data)
     }
 
@@ -377,11 +367,36 @@ export default props => {
 
     async function saveRecipeProduced(quantity) {
         const realm = await getRealm()
+        const arrEssencesNames = []
+        const arrEssencesBrandsName = []
+        const arrEssencesPrices = []
+        const arrEssencesQuantity = []
+        for (var ess of recipeWillProduced.essences) {
+            arrEssencesNames.push(ess.name)
+            arrEssencesBrandsName.push(ess.brand.name)
+            arrEssencesPrices.push(ess.price)
+            arrEssencesQuantity.push(ess.quantity)
+        }
+        const arrPercents = [...recipeWillProduced.percents]
+        const obj = {
+            _id: recipeWillProduced._id,
+            name: recipeWillProduced.name,
+            vg: recipeWillProduced.vg,
+            pg: recipeWillProduced.pg,
+            essencePg: recipeWillProduced.essencePg,
+            essenceVg: recipeWillProduced.essenceVg,
+        }
+
         try {
             realm.write(() => {
                 const recipeProduced = realm.create('RecipeProduced', {
                     _id: `${uuid()}`,
-                    recipe: recipeWillProduced,
+                    recipe: obj,
+                    percents: arrPercents,
+                    essencesNames: arrEssencesNames,
+                    essencesBrandsName: arrEssencesBrandsName,
+                    essencesPrices: arrEssencesPrices,
+                    essencesQuantity: arrEssencesQuantity,
                     createdAt: new Date(),
                     months: Number(months),
                     breath: Number(breath),
@@ -481,7 +496,7 @@ export default props => {
                         show={showAlertPgOrVgEmpty}
                         showProgress={false}
                         title="Faltam dados importantes"
-                        message={`VG ou PG não foram informados. Para conseguir salvar ambos devem ser inseridos.`}
+                        message={`VG ou PG não foram selecionados. Para criar uma nova receita, ambos devem ser informados.`}
                         closeOnTouchOutside={false}
                         closeOnHardwareBackPress={false}
                         showCancelButton={false}
@@ -587,7 +602,7 @@ export default props => {
                                     outlineColor={estilo.colors.azul}
                                     activeOutlineColor={estilo.colors.laranja}
                                     selectionColor='#ccc'
-                                    value={breath}
+                                    value={`${breath}`}
                                     onChangeText={d => setBreath(d)}
                                 />
                                 <TextInput
@@ -600,7 +615,7 @@ export default props => {
                                     outlineColor={estilo.colors.azul}
                                     activeOutlineColor={estilo.colors.laranja}
                                     selectionColor='#ccc'
-                                    value={months}
+                                    value={`${months}`}
                                     onChangeText={m => setMonths(m)}
                                 />
 
@@ -779,6 +794,8 @@ export default props => {
                                                 value={quantidade}
                                                 onChangeText={q => {
                                                     if (q.includes(',')) {
+                                                        return
+                                                    } else if (q.includes('.')) {
                                                         return
                                                     } else {
                                                         setQuantidade(q)

@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Text, View, StyleSheet, TextInput, TouchableWithoutFeedback } from 'react-native'
+import { Text, View, StyleSheet, Image, TouchableWithoutFeedback } from 'react-native'
 import FontAwesome from 'react-native-vector-icons/FontAwesome'
 import { RFValue } from "react-native-responsive-fontsize"
 import estilo from '../estilo'
@@ -22,7 +22,7 @@ export default ({ data, deletion, index, vg }) => {
                 </View>
                 <TouchableWithoutFeedback onPress={() => deletion(data, index)}>
                     <View style={{ width: '10%', alignItems: 'flex-end' }}>
-                        <FontAwesome name='trash' size={RFValue(15)} color={estilo.colors.azul} />
+                    <Image style={{ width: RFValue(15), height: RFValue(15) }} source={require('../assets/colorIcon/trash-bin.png')} />
                     </View>
                 </TouchableWithoutFeedback>
 

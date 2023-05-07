@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from 'react'
-import { StyleSheet, View, Text, TouchableWithoutFeedback, FlatList } from 'react-native'
-import { VictoryAxis, VictoryChart, VictoryTheme, VictoryBar, VictoryLabel } from "victory-native";
+import { StyleSheet, View, Text, TouchableWithoutFeedback, FlatList, Image, ScrollView } from 'react-native'
+import { VictoryAxis, VictoryChart, VictoryTheme, VictoryBar, VictoryLabel, VictoryLegend } from "victory-native";
 import Header from '../components/Header'
 import { getRealm } from '../services/realm'
 import { useFocusEffect } from '@react-navigation/native'
@@ -11,34 +11,58 @@ import CardRecipeProduced from '../components/CardRecipeProduced'
 
 export default props => {
     const [recipesProduced, setRecipesProduced] = useState([])
-    const [changeChartsOrHistoric, setChangeChartsOrHistoric] = useState(false)
-
+    const [changeChartsOrHistoric, setChangeChartsOrHistoric] = useState(true)
     const [total, setTotal] = useState([])
-
+    const [custo, setCustoTotal] = useState([])
 
     useFocusEffect(useCallback(() => {
         async function getRecipes() {
             const realm = await getRealm()
             const r = realm.objects('RecipeProduced')
+
             setRecipesProduced(r)
             r.addListener((values) => {
                 setRecipesProduced([...values])
             })
-
-
             var recipeProduced = [...r]
+
             var essenciaqtde = []
-
+            var custoTotal = []
+            var soma = 0
             for (let index = 0; index < recipeProduced.length; index++) {
-                for (let ind = 0; ind < recipeProduced[index].recipe.percents.length; ind++) {
-                    essenciaqtde.push({ name: recipeProduced[index].recipe.essences[ind].name, qtde: recipeProduced[index].recipe.percents[ind] * recipeProduced[index].quantity / 100 })
+                custoReceita = []
+                var percentPg = 0
+                soma = 0
+                console.log(recipeProduced[index])
+                for (let ind = 0; ind < recipeProduced[index].percents.length; ind++) {
+                    essenciaqtde.push({ name: recipeProduced[index].essencesNames[ind], qtde: recipeProduced[index].percents[ind] * recipeProduced[index].quantity / 100 })
+                    soma += (recipeProduced[index].percents[ind] * recipeProduced[index].quantity / 100) * recipeProduced[index].essencesPrices[ind]
+                    percentPg += recipeProduced[index].percents[ind]
                 }
+                soma += recipeProduced[index].recipe.essenceVg.price * (recipeProduced[index].recipe.vg * recipeProduced[index].quantity / 100)
+                soma += recipeProduced[index].recipe.essencePg.price * ((recipeProduced[index].recipe.pg - percentPg) * recipeProduced[index].quantity / 100)
+                custoTotal.push({ custo: (soma / recipeProduced[index].quantity).toFixed(2), nome: recipeProduced[index].recipe.name })
             }
+            console.log(custoTotal)
+            console.log('antes')
 
+            custoTotal.sort(function (a, b) {
+                if (a.custo > b.custo) {
+                    return 1;
+                }
+                if (a.custo < b.custo) {
+                    return -1;
+                }
+
+                return 0;
+            });
+            console.log(custoTotal)
+            setCustoTotal(custoTotal)
+
+            //grafico essencias mais consumidas
             var namess = []
             var essenciatotal = []
             var names1 = []
-
 
             for (let i = 0; i < essenciaqtde.length; i++) {
                 namess.push(essenciaqtde[i].name)
@@ -55,7 +79,6 @@ export default props => {
                 }
                 essenciatotal.push({ name: names1[e], qtde: soma })
             }
-
             essenciatotal.sort(function (a, b) {
                 if (a.qtde < b.qtde) {
                     return 1;
@@ -66,13 +89,7 @@ export default props => {
                 // a must be equal to b
                 return 0;
             });
-
-            setTotal(essenciatotal.slice(0, 8))
-
-
-
-
-
+            setTotal(essenciatotal.slice(0, 11))
             return () => {
                 r.removeAllListeners()
             }
@@ -129,44 +146,82 @@ export default props => {
                             <View style={{ height: RFValue(70) }}></View>
                         </>
                         :
-                        <View>
-                            {total ?
-                                <View >
-                                    <Text style={styles.textCardEssence}>As 7 essências mais consumidas</Text>
-                                    <View>
-                                        <VictoryChart
-                                            theme={VictoryTheme.material}
-                                            domainPadding={25}
-                                        >
-                                            <VictoryBar
-                                                // data={total.filter(essencia => essencia.qtde >= 30)}
-                                                data={total.sort()}
-                                                x='name' y='qtde'
-                                                alignment="middle"
-                                                labels={({ datum }) => `${Number(datum._y).toFixed(2)}`}
-                                                sortOrder="descending"
+                        <>
+                            <ScrollView>
+                                {total.length > 0 ?
+                                    <>
+                                        <View >
 
-                                            />
-                                            <VictoryAxis
-                                                tickFormat={total.name}
-                                                tickLabelComponent={<VictoryLabel angle={-30} textAnchor="end" style={{ fontSize: 8 }} />}
-                                            />
-                                            {/* <VictoryAxis
+                                            <View>
+                                                <VictoryChart
+                                                    theme={VictoryTheme.material}
+                                                    domainPadding={25}
+                                                >
+                                                    <VictoryBar
+                                                        // data={total.filter(essencia => essencia.qtde >= 30)}
+                                                        data={total.sort()}
+                                                        x='name' y='qtde'
+                                                        alignment="middle"
+                                                        labels={({ datum }) => `${Number(datum._y).toFixed(2)}`}
+                                                        sortOrder="descending"
+                                                        style={{ data: { fill: estilo.colors.laranja } }}
+                                                    />
+                                                    <VictoryAxis
+                                                        tickFormat={total.name}
+                                                        tickLabelComponent={<VictoryLabel angle={-30} textAnchor="end" style={{ fontSize: 8 }} />}
+                                                    />
+                                                    {/* <VictoryAxis
                                             dependentAxis
                                             tickFormat={(x) => (`${x}ml`)}
                                         /> */}
 
-                                        </VictoryChart>
-                                    </View>
+                                                </VictoryChart>
+                                            </View>
+                                            <Text style={styles.textCardEssence}>Essências mais consumidas</Text>
+                                        </View>
+                                    </>
+                                    : false
+                                }
+                                {custo.length > 0 ?
+                                    <>
+                                        <View >
 
-                                </View>
+                                            <View>
+                                                <VictoryChart
+                                                    theme={VictoryTheme.material}
+                                                    domainPadding={25}
+                                                >
+                                                    <VictoryBar
+                                                        // data={custo.filter(essencia => essencia.qtde >= 30)}
+                                                        data={custo.sort()}
+                                                        x='nome' y='custo'
+                                                        alignment="middle"
+                                                        labels={({ datum }) => `${Number(datum.custo).toFixed(2)}` }
+                                                        style={{ data: { fill: estilo.colors.laranja } }}
+                                                        
+                                                        sortOrder="descending"
+                                                    />
+                                                    <VictoryAxis
+                                                        tickFormat={total.name}
+                                                        tickLabelComponent={<VictoryLabel angle={-15} textAnchor="end" style={{ fontSize: 8 }} />}
+                                                    />
+                                                    <VictoryAxis
+                                                        dependentAxis
+                                                        tickFormat={(x) => (`${x}`)}
+                                                    />
 
-                                : false
+                                                </VictoryChart>
+                                            </View>
+                                            <Text style={styles.textCardEssence}>Receitas por custo/ml</Text>
+                                        </View>
+                                    </>
+                                    : false
+                                }
 
-                            }
 
-
-                        </View>
+                            </ScrollView>
+                            <View style={{ height: RFValue(80) }}></View>
+                        </>
                 }
 
 

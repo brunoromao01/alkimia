@@ -4,7 +4,7 @@ export const getRealm = async () => {
 	return await Realm.open({
 		path: 'juiceApp',
 		schema: [Essence, Brand, Suplier, Recipe, Config, RecipeProduced],
-		schemaVersion: 28
+		schemaVersion: 34
 	})
 }
 
@@ -29,7 +29,12 @@ export const RecipeProduced = {
 	primaryKey: "_id",
 	properties: {
 		_id: "string",
-		recipe: 'Recipe',
+		recipe: '{}',
+		essencesNames: 'string[]',
+		essencesBrandsName: 'string[]',
+		essencesPrices: 'double[]',
+		essencesQuantity: 'double[]',
+		percents: 'int[]',
 		createdAt: 'date',
 		months: 'int',
 		breath: 'int',
@@ -37,6 +42,7 @@ export const RecipeProduced = {
 		quantity: 'double'
 	}
 }
+
 
 export const Essence = {
 	name: "Essence",
@@ -76,9 +82,11 @@ export const Config = {
 	primaryKey: "_id",
 	properties: {
 		_id: "string",
-		pgDefault: {type: 'double', default: 1.04},
-		vgDefault: {type: 'double', default: 1.26},
-		stepDefault: {type: 'int', default: 5},
+		pgDefault: { type: 'double', default: 1.04 },
+		vgDefault: { type: 'double', default: 1.26 },
+		stepDefault: { type: 'int', default: 5 },
+		breathDefault: {type: 'int', default: 7},
+		monthDefault: {type: 'int', default: 6}
 	},
 }
 

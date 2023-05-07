@@ -5,6 +5,14 @@ import Essencia from '../views/Essencia'
 import RecipeProduced from '../views/RecipeProduced'
 import Marca from '../views/Marca'
 import Receita from '../views/Receita'
+import BarChartWhite from '../assets/tabIcon/barchart-branco.svg'
+import BarChartOrange from '../assets/tabIcon/barchart-laranja.svg'
+import EssenceOrange from '../assets/tabIcon/essencia-laranja.svg'
+import EssenceWhite from '../assets/tabIcon/essencia-branco.svg'
+import BerriesWhite from '../assets/tabIcon/berries-branco.svg'
+import BerriesOrange from '../assets/tabIcon/berries-laranja.svg'
+import estilo from '../estilo'
+import { RFValue } from 'react-native-responsive-fontsize'
 
 const Tabs = createBottomTabNavigator()
 
@@ -35,8 +43,8 @@ export default props => {
                 component={Essencia}
                 options={{
                     tabBarIcon: ({ focused, size, color }) => (
-                        focused ? <Image style={styles.imageIcon} source={require('../assets/tabIcon/berries3.png')} />
-                        : <Image style={styles.imageIcon2} source={require('../assets/tabIcon/berries3.png')} />
+                        focused ? <BerriesOrange width={RFValue(45)} height={RFValue(45)}  />
+                        : < BerriesWhite width={RFValue(35)} height={RFValue(35)}  />
                     )
                 }}
             />
@@ -45,8 +53,8 @@ export default props => {
                 component={Receita}
                 options={{
                     tabBarIcon: ({ focused, size, color }) => (
-                        focused ? <Image style={styles.imageIcon} source={require('../assets/tabIcon/essencia3.png')} />
-                        : <Image style={styles.imageIcon2} source={require('../assets/tabIcon/essencia3.png')} />
+                        focused ? <EssenceOrange width={RFValue(45)} height={RFValue(45)}  />
+                        : < EssenceWhite width={RFValue(35)} height={RFValue(35)}  />
                     )
                 }}
             />
@@ -55,8 +63,8 @@ export default props => {
                 component={RecipeProduced}
                 options={{
                     tabBarIcon: ({ focused, size, color }) => (
-                        focused ? <Image style={styles.imageIcon} source={require('../assets/tabIcon/chart3.png')} />
-                        : <Image style={styles.imageIcon2} source={require('../assets/tabIcon/chart3.png')} />
+                        focused ? <BarChartOrange width={RFValue(45)} height={RFValue(45)}  />
+                        : < BarChartWhite width={RFValue(35)} height={RFValue(35)}  />
                     )
                 }}
             />
