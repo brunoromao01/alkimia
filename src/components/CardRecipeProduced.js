@@ -92,10 +92,10 @@ export default ({ data, saveRating }) => {
         <View style={styles.cardEssence}>
             <View style={{ flexDirection: 'row', paddingBottom: RFValue(10) }}>
                 <View style={{ width: '50%' }}>
-                    <Text style={styles.textCardRecipe}>{data.recipe.name}</Text>
+                    <Text adjustsFontSizeToFit numberOfLines={1} style={styles.textCardRecipe}>{data.recipe.name}</Text>
                 </View>
                 <View style={{ width: '40%', alignItems: 'center' }}>
-                    <Text style={styles.textCardRecipe}>{(data.quantity).toFixed(2)}ml</Text>
+                    <Text adjustsFontSizeToFit numberOfLines={1} style={styles.textCardRecipe}>{(data.quantity).toFixed(2)}ml</Text>
                 </View>
                 <View style={{ width: '10%', alignItems: 'center', }}>
                     <TouchableWithoutFeedback onPress={() => setShowFullRecipe(!showFullRecipe)}>
@@ -118,29 +118,29 @@ export default ({ data, saveRating }) => {
                         {/* VG */}
                         <View style={{ flexDirection: 'row', backgroundColor: '#fafafa', }}>
                             <View style={{ width: '44%', justifyContent: 'center', alignItems: 'flex-start' }}>
-                                <Text style={styles.textCardEssence}>VG ({data.recipe.essenceVg.brand.name})</Text></View>
+                                <Text adjustsFontSizeToFit numberOfLines={1} style={styles.textCardEssence}>VG ({data.recipe.essenceVg.brand.name})</Text></View>
                             <View style={{ width: '14%', justifyContent: 'center', alignItems: 'center' }}>
-                                <Text style={styles.textCardEssence}>{data.recipe.vg}</Text></View>
+                                <Text adjustsFontSizeToFit numberOfLines={1} style={styles.textCardEssence}>{data.recipe.vg}</Text></View>
                             <View style={{ width: '14%', justifyContent: 'center', alignItems: 'center' }}>
-                                <Text style={styles.textCardEssence}>{mlVg.toFixed(2)}</Text></View>
+                                <Text adjustsFontSizeToFit numberOfLines={1} style={styles.textCardEssence}>{mlVg.toFixed(2)}</Text></View>
                             <View style={{ width: '14%', justifyContent: 'center', alignItems: 'center' }}>
-                                <Text style={styles.textCardEssence}>{gramasVg.toFixed(2)}</Text></View>
+                                <Text adjustsFontSizeToFit numberOfLines={1} style={styles.textCardEssence}>{gramasVg.toFixed(2)}</Text></View>
                             <View style={{ width: '14%', justifyContent: 'center', alignItems: 'center' }}>
-                                <Text style={styles.textCardEssence}>{custoVg.toFixed(2)}</Text></View>
+                                <Text adjustsFontSizeToFit numberOfLines={1} style={styles.textCardEssence}>{custoVg.toFixed(2)}</Text></View>
                         </View>
 
                         {/* PG */}
                         <View style={{ flexDirection: 'row', backgroundColor: '#fafafa', }}>
                             <View style={{ width: '44%', justifyContent: 'center', alignItems: 'flex-start' }}>
-                                <Text style={styles.textCardEssence}>PG ({data.recipe.essencePg.brand.name})</Text></View>
+                                <Text adjustsFontSizeToFit numberOfLines={1} style={styles.textCardEssence}>PG ({data.recipe.essencePg.brand.name})</Text></View>
                             <View style={{ width: '14%', justifyContent: 'center', alignItems: 'center' }}>
-                                <Text style={styles.textCardEssence}>{pgPercent}</Text></View>
+                                <Text adjustsFontSizeToFit numberOfLines={1} style={styles.textCardEssence}>{pgPercent}</Text></View>
                             <View style={{ width: '14%', justifyContent: 'center', alignItems: 'center' }}>
-                                <Text style={styles.textCardEssence}>{mlPg}</Text></View>
+                                <Text adjustsFontSizeToFit numberOfLines={1} style={styles.textCardEssence}>{mlPg}</Text></View>
                             <View style={{ width: '14%', justifyContent: 'center', alignItems: 'center' }}>
-                                <Text style={styles.textCardEssence}>{gramasPg}</Text></View>
+                                <Text adjustsFontSizeToFit numberOfLines={1} style={styles.textCardEssence}>{gramasPg}</Text></View>
                             <View style={{ width: '14%', justifyContent: 'center', alignItems: 'center' }}>
-                                <Text style={styles.textCardEssence}>{pgCusto.toFixed(2)}</Text></View>
+                                <Text adjustsFontSizeToFit numberOfLines={1} style={styles.textCardEssence}>{pgCusto.toFixed(2)}</Text></View>
 
                         </View>
                         <FlatList
@@ -158,16 +158,16 @@ export default ({ data, saveRating }) => {
                                             <Text adjustsFontSizeToFit numberOfLines={1} style={styles.textCardEssence}>{item.essencia.name} ({item.essencia.brandName})</Text>
                                         </View>
                                         <View style={{ width: '14%', justifyContent: 'center', alignItems: 'center' }}>
-                                            <Text style={styles.textCardEssence}>{item.percentual} </Text>
+                                            <Text adjustsFontSizeToFit numberOfLines={1} style={styles.textCardEssence}>{item.percentual} </Text>
                                         </View>
                                         <View style={{ width: '14%', justifyContent: 'center', alignItems: 'center' }}>
-                                            <Text style={styles.textCardEssence}>{ml.toFixed(2)} </Text>
+                                            <Text adjustsFontSizeToFit numberOfLines={1} style={styles.textCardEssence}>{ml.toFixed(2)} </Text>
                                         </View>
                                         <View style={{ width: '14%', justifyContent: 'center', alignItems: 'center' }}>
-                                            <Text style={styles.textCardEssence}>{g.toFixed(2)} </Text>
+                                            <Text adjustsFontSizeToFit numberOfLines={1} style={styles.textCardEssence}>{g.toFixed(2)} </Text>
                                         </View>
                                         <View style={{ width: '14%', justifyContent: 'center', alignItems: 'center' }}>
-                                            <Text style={styles.textCardEssence}>{rs.toFixed(2)} </Text>
+                                            <Text adjustsFontSizeToFit numberOfLines={1} style={styles.textCardEssence}>{rs.toFixed(2)} </Text>
                                         </View>
                                     </View>
                                 )
@@ -176,19 +176,19 @@ export default ({ data, saveRating }) => {
                         {/* totais*/}
                         <View style={{ flexDirection: 'row', backgroundColor: '#fafafa', paddingBottom: RFValue(5), borderRadius: RFValue(3) }}>
                             <View style={{ width: '44%', justifyContent: 'center', alignItems: 'flex-start' }}>
-                                <Text style={styles.textCardEssenceBold}>Total</Text>
+                                <Text adjustsFontSizeToFit numberOfLines={1} style={styles.textCardEssenceBold}>Total</Text>
                             </View>
                             <View style={{ width: '14%', justifyContent: 'center', alignItems: 'center' }}>
-                                <Text style={styles.textCardEssenceBold}>100</Text>
+                                <Text adjustsFontSizeToFit numberOfLines={1} style={styles.textCardEssenceBold}>100</Text>
                             </View>
                             <View style={{ width: '14%', justifyContent: 'center', alignItems: 'center' }}>
-                                <Text style={styles.textCardEssenceBold}>{data.quantity} </Text>
+                                <Text adjustsFontSizeToFit numberOfLines={1} style={styles.textCardEssenceBold}>{data.quantity} </Text>
                             </View>
                             <View style={{ width: '14%', justifyContent: 'center', alignItems: 'center' }}>
-                                <Text style={styles.textCardEssenceBold}>{gramaTotal.toFixed(2)}</Text>
+                                <Text adjustsFontSizeToFit numberOfLines={1} style={styles.textCardEssenceBold}>{gramaTotal.toFixed(2)}</Text>
                             </View>
                             <View style={{ width: '14%', justifyContent: 'center', alignItems: 'center' }}>
-                                <Text style={styles.textCardEssenceBold}>{custoTotal.toFixed(2)} </Text>
+                                <Text adjustsFontSizeToFit numberOfLines={1} style={styles.textCardEssenceBold}>{custoTotal.toFixed(2)} </Text>
                             </View>
                         </View>
 
@@ -203,7 +203,7 @@ export default ({ data, saveRating }) => {
                 </View>
                 <View style={{ width: '30%', flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'center', marginLeft: RFValue(5) }}>
                     <Image style={{ width: RFValue(25), height: RFValue(25) }} source={require('../assets/colorIcon/schedule.png')} />
-                    <Text style={[styles.textCardRecipeBottom, { marginLeft: RFValue(5) }]}>{mesVencimento != 0 ? mesVencimento : '--'}</Text>
+                    <Text adjustsFontSizeToFit numberOfLines={1} style={[styles.textCardRecipeBottom, { marginLeft: RFValue(5) }]}>{mesVencimento != 0 ? mesVencimento : '--'}</Text>
                 </View>
                 <View style={{ width: '25%', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-evenly' }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -237,8 +237,6 @@ export default ({ data, saveRating }) => {
 
                         />
                     </View>
-
-
 
                 </View>
             </View>

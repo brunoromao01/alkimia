@@ -1,10 +1,9 @@
 import React from 'react'
 import { Dimensions, Image, StyleSheet } from 'react-native'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
-import Essencia from '../views/Essencia'
+import Essence from '../views/Essence'
 import RecipeProduced from '../views/RecipeProduced'
-import Marca from '../views/Marca'
-import Receita from '../views/Receita'
+import Recipe from '../views/Recipe'
 import BarChartWhite from '../assets/tabIcon/barchart-branco.svg'
 import BarChartOrange from '../assets/tabIcon/barchart-laranja.svg'
 import EssenceOrange from '../assets/tabIcon/essencia-laranja.svg'
@@ -20,7 +19,7 @@ export default props => {
 
     return (
         <Tabs.Navigator {...props}
-            initialRouteName={'RecipeProduced'}
+            initialRouteName={'Recipe'}
             screenOptions={{
                 tabBarHideOnKeyboard: true,
                 headerShown: false,
@@ -39,8 +38,8 @@ export default props => {
                 },
             }}>
             <Tabs.Screen
-                name='Essencia'
-                component={Essencia}
+                name='Essence'
+                component={Essence}
                 options={{
                     tabBarIcon: ({ focused, size, color }) => (
                         focused ? <BerriesOrange width={RFValue(45)} height={RFValue(45)}  />
@@ -49,8 +48,8 @@ export default props => {
                 }}
             />
             <Tabs.Screen
-                name='Receita'
-                component={Receita}
+                name='Recipe'
+                component={Recipe}
                 options={{
                     tabBarIcon: ({ focused, size, color }) => (
                         focused ? <EssenceOrange width={RFValue(45)} height={RFValue(45)}  />

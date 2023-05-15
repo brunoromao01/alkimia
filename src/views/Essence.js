@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { StyleSheet, View, Text, TouchableWithoutFeedback, Modal, Dimensions, TouchableOpacity, FlatList, Alert, Switch } from 'react-native'
+import { StyleSheet, View, Text, TouchableWithoutFeedback, Modal, Dimensions, TouchableOpacity, FlatList, Alert, Switch, Image } from 'react-native'
 import { TextInput } from 'react-native-paper'
 import FontAwesome from 'react-native-vector-icons/FontAwesome'
 import { getRealm } from '../services/realm'
@@ -12,6 +12,7 @@ import SeparatorFlatlist from '../components/SeparatorFlatlist'
 import AwesomeAlert from 'react-native-awesome-alerts';
 
 export default props => {
+    const regex = /^\d*(\.\d+)?$/
     const [modalVisible, setModalVisible] = useState(false);
     const [modalBrand, setModalBrand] = useState(false);
     const [modalSuplier, setModalSuplier] = useState(false);
@@ -41,6 +42,8 @@ export default props => {
     const [newQuantity, setNewQuantity] = useState('')
     const [newPrice, setNewPrice] = useState('')
     const [newTaste, setNewTaste] = useState('')
+    const [priceRegex, setPriceRegex] = useState(0)
+    const [quantityRegex, setQuantityRegex] = useState(0)
 
     //alerta campos obrigatorios vazios
 
@@ -115,7 +118,7 @@ export default props => {
             console.log(error)
         }
 
-    },[search])
+    }, [search])
 
 
     // deleta marca
@@ -250,6 +253,7 @@ export default props => {
                 setMarca('*Marca')
                 setFornecedor('Fornecedor')
                 setModalVisible(false)
+                setNewBrandFull({})
             } catch (err) {
                 console.log('[ERRO]: ' + err)
             }
@@ -320,14 +324,12 @@ export default props => {
 
 
                 <View style={{ paddingHorizontal: RFValue(20), marginTop: RFValue(10), marginBottom: RFValue(30) }}>
-                    {/* <Button title='todas essencias' onPress={() => showEssences()} />
-                    <Button title='todas marcas' onPress={() => showBrands()} /> */}
 
                     <TextInput
                         style={styles.input}
                         mode='outlined'
                         keyboardType='default'
-                        label="Pesquise a essência"
+                        label="Pesquise pela essência ou marca"
                         placeholder='Ex: Strawberry Ripe'
                         placeholderTextColor={'#999'}
                         outlineColor={estilo.colors.azul}
@@ -353,8 +355,8 @@ export default props => {
                         setBrandEmpty(false)
                         setNameEmpty(false)
                         setQuantityEmpty(false)
+                        setNewSuplierFull({})
                         setModalVisible(true)
-
                     }}>
                         <View style={{ justifyContent: 'space-around', flexDirection: 'row', paddingVertical: RFValue(7), backgroundColor: 'transparent', paddingHorizontal: RFValue(10), borderWidth: RFValue(2), borderColor: estilo.colors.laranja, borderRadius: RFValue(10), alignItems: 'center' }}>
                             <FontAwesome name='plus' size={RFValue(14)} color={estilo.colors.laranja} />
@@ -365,7 +367,7 @@ export default props => {
 
                 {/* cabeçalho das colunas (nome, marca, quantidade) */}
                 {
-                    essences ?
+                    essences.length >= 1 ?
                         <View style={{ width: '100%', flexDirection: 'row' }}>
                             <TouchableWithoutFeedback onPress={() => {
                                 setEssenceOrder(true)
@@ -392,7 +394,7 @@ export default props => {
                             </TouchableWithoutFeedback>
                             <View style={{ width: '10%' }} />
                         </View>
-                        : false
+                        : <View style={{ justifyContent: 'flex-start' }}><Image source={require('../assets/background/empty.jpg')} resizeMode='contain' style={{ width: '100%', height: RFValue(250), justifyContent: "flex-start" }} /></View>
                 }
                 <FlatList
                     data={essences}
@@ -411,7 +413,7 @@ export default props => {
                     </TouchableWithoutFeedback>
 
 
-                    {/* Bloco central do modal */}
+                    {/* Bloco central do modal de inserir essência*/}
                     <View flexDirection='row' >
 
                         {/* parte lateral do modal cadastro de essencia */}
@@ -440,13 +442,14 @@ export default props => {
                                 outlineColor={estilo.colors.azul}
                                 activeOutlineColor={estilo.colors.laranja}
                                 selectionColor='#ccc'
+                                maxLength={20}
                                 value={newName}
                                 onChangeText={name => {
                                     setNewName(name)
                                     setNameEmpty(false)
                                 }}
                             />
-                            {nameEmpty ? <Text style={{ color: '#ccc', width: '90%', alignSelf: 'center' }}>*Informe o nome</Text> : false}
+                            {nameEmpty ? <Text style={{ color: '#999', width: '90%', alignSelf: 'center' }}>*Informe o nome</Text> : false}
 
                             <TouchableWithoutFeedback onPress={() => setModalBrand(true)}>
                                 <View style={{ width: '90%', borderWidth: 1, alignSelf: 'center', height: RFValue(50), backgroundColor: 'white', marginTop: RFValue(5), borderRadius: RFValue(3), flexDirection: 'row', alignItems: 'center' }}>
@@ -454,14 +457,15 @@ export default props => {
                                     <Text style={{ color: estilo.colors.azul, marginLeft: RFValue(12), fontSize: RFValue(15) }}>{marca}</Text>
                                 </View>
                             </TouchableWithoutFeedback>
-                            {brandEmpty ? <Text style={{ color: '#ccc', width: '90%', alignSelf: 'center' }}>*Informe a marca</Text> : false}
+                            {brandEmpty ? <Text style={{ color: '#999', width: '90%', alignSelf: 'center' }}>*Informe a marca</Text> : false}
 
 
                             {/* Modal cadastro de marca */}
                             <Modal visible={modalBrand} onDismiss={() => setModalBrand(!modalBrand)} onRequestClose={() => setModalBrand(!modalBrand)} animationType="fade"
                                 transparent={true} >
-
-                                <View style={{ flex: 3, backgroundColor: 'rgba(0,0,0,0.6)' }} />
+                                <TouchableWithoutFeedback onPress={() => setModalBrand(!modalBrand)}>
+                                    <View style={{ flex: 3, backgroundColor: 'rgba(0,0,0,0.6)' }} />
+                                </TouchableWithoutFeedback>
 
                                 <View style={{ flex: 6, backgroundColor: 'white', paddingVertical: RFValue(15) }}>
                                     <View style={{ flex: 4, borderWidth: 1, borderRadius: RFValue(5), borderColor: estilo.colors.azul, paddingHorizontal: RFValue(10), marginHorizontal: RFValue(10) }}>
@@ -492,6 +496,7 @@ export default props => {
                                             placeholderTextColor={'#999'}
                                             outlineColor={estilo.colors.azul}
                                             activeOutlineColor={estilo.colors.laranja}
+                                            maxLength={12}
                                             selectionColor='#ccc'
                                             value={newBrand}
                                             onChangeText={text => setNewBrand(text)}
@@ -513,8 +518,9 @@ export default props => {
                                         </TouchableOpacity>
                                     </View>
                                 </View>
-
-                                <View style={{ flex: 4, backgroundColor: 'rgba(0,0,0,0.6)' }} />
+                                <TouchableWithoutFeedback onPress={() => setModalBrand(!modalBrand)}>
+                                    <View style={{ flex: 4, backgroundColor: 'rgba(0,0,0,0.6)' }} />
+                                </TouchableWithoutFeedback>
 
                             </Modal>
 
@@ -530,16 +536,21 @@ export default props => {
                                 selectionColor='#ccc'
                                 value={`${newQuantity}`}
                                 onChangeText={quantity => {
-                                    if (quantity.includes(',')) {
-                                        return
-                                    } else {
+                                    if (regex.test(quantity)) {
                                         setNewQuantity(quantity)
-                                        setQuantityEmpty(false)
+                                    } else {
+                                        if (quantity.indexOf('.') > 0 && quantityRegex == 0) {
+                                            setNewQuantity(quantity)
+                                            setQuantityRegex(1)
+                                        } else {
+                                            return
+                                        }
                                     }
-
+                                    if (!quantity.includes('.')) setQuantityRegex(0)
+                                    setQuantityEmpty(false)
                                 }}
                             />
-                            {quantityEmpty ? <Text style={{ color: '#ccc', width: '90%', alignSelf: 'center' }}>*Informe a quantidade</Text> : false}
+                            {quantityEmpty ? <Text style={{ color: '#999', width: '90%', alignSelf: 'center' }}>*Informe a quantidade</Text> : false}
 
                             <TextInput
                                 style={styles.inputModal}
@@ -553,16 +564,21 @@ export default props => {
                                 selectionColor='#ccc'
                                 value={`${newPrice}`}
                                 onChangeText={price => {
-                                    if (price.includes(',')) {
-                                        return
-                                    } else {
+                                    if (regex.test(price)) {
                                         setNewPrice(price)
-                                        setPriceEmpty(false)
+                                    } else {
+                                        if (price.indexOf('.') > 0 && priceRegex == 0) {
+                                            setNewPrice(price)
+                                            setPriceRegex(1)
+                                        } else {
+                                            return
+                                        }
                                     }
+                                    if (!price.includes('.')) setPriceRegex(0)
+                                    setPriceEmpty(false)
                                 }}
                             />
-                            {priceEmpty ? <Text style={{ color: '#ccc', width: '90%', alignSelf: 'center' }}>*Informe o preço</Text> : false}
-
+                            {priceEmpty ? <Text style={{ color: '#999', width: '90%', alignSelf: 'center' }}>*Informe o preço</Text> : false}
 
                             <TextInput
                                 style={styles.inputModal}
@@ -589,7 +605,9 @@ export default props => {
                             {/* Modal cadastro de fornecedor */}
                             <Modal visible={modalSuplier} onDismiss={() => setModalSuplier(!modalSuplier)} onRequestClose={() => setModalSuplier(!modalSuplier)} animationType="fade"
                                 transparent={true} >
-                                <View style={{ flex: 3, backgroundColor: 'rgba(0,0,0,0.6)' }}></View>
+                                <TouchableWithoutFeedback onPress={() => setModalSuplier(!modalSuplier)}>
+                                    <View style={{ flex: 3, backgroundColor: 'rgba(0,0,0,0.6)' }}></View>
+                                </TouchableWithoutFeedback>
                                 <View style={{ flex: 6, backgroundColor: 'white', paddingVertical: RFValue(15) }}>
                                     <View style={{ flex: 4, borderWidth: 1, borderRadius: RFValue(5), borderColor: estilo.colors.azul, paddingHorizontal: RFValue(10), marginHorizontal: RFValue(10) }}>
                                         <FlatList
@@ -638,7 +656,9 @@ export default props => {
                                         </TouchableOpacity>
                                     </View>
                                 </View>
-                                <View style={{ flex: 4, backgroundColor: 'rgba(0,0,0,0.6)' }}></View>
+                                <TouchableWithoutFeedback onPress={() => setModalSuplier(!modalSuplier)}>
+                                    <View style={{ flex: 4, backgroundColor: 'rgba(0,0,0,0.6)' }}></View>
+                                </TouchableWithoutFeedback>
                             </Modal>
 
                             <TouchableOpacity

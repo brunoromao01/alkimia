@@ -1,15 +1,16 @@
 import React, { useCallback, useState } from 'react'
-import { StyleSheet, View, Text, TouchableWithoutFeedback, FlatList, Image, ScrollView } from 'react-native'
+import { StyleSheet, View, Text, TouchableWithoutFeedback, FlatList, TouchableOpacity, ScrollView, ImageBackground, Dimensions } from 'react-native'
 import { VictoryAxis, VictoryChart, VictoryTheme, VictoryBar, VictoryLabel, VictoryLegend } from "victory-native";
 import Header from '../components/Header'
 import { getRealm } from '../services/realm'
-import { useFocusEffect } from '@react-navigation/native'
+import { useFocusEffect, useNavigation } from '@react-navigation/native'
 import estilo from '../estilo'
 import { RFValue } from "react-native-responsive-fontsize"
 import SeparatorFlatList from '../components/SeparatorFlatlist'
 import CardRecipeProduced from '../components/CardRecipeProduced'
 
 export default props => {
+    const navigation = useNavigation()
     const [recipesProduced, setRecipesProduced] = useState([])
     const [changeChartsOrHistoric, setChangeChartsOrHistoric] = useState(true)
     const [total, setTotal] = useState([])
@@ -33,7 +34,7 @@ export default props => {
                 custoReceita = []
                 var percentPg = 0
                 soma = 0
-                console.log(recipeProduced[index])
+
                 for (let ind = 0; ind < recipeProduced[index].percents.length; ind++) {
                     essenciaqtde.push({ name: recipeProduced[index].essencesNames[ind], qtde: recipeProduced[index].percents[ind] * recipeProduced[index].quantity / 100 })
                     soma += (recipeProduced[index].percents[ind] * recipeProduced[index].quantity / 100) * recipeProduced[index].essencesPrices[ind]
@@ -43,8 +44,7 @@ export default props => {
                 soma += recipeProduced[index].recipe.essencePg.price * ((recipeProduced[index].recipe.pg - percentPg) * recipeProduced[index].quantity / 100)
                 custoTotal.push({ custo: (soma / recipeProduced[index].quantity).toFixed(2), nome: recipeProduced[index].recipe.name })
             }
-            console.log(custoTotal)
-            console.log('antes')
+
 
             custoTotal.sort(function (a, b) {
                 if (a.custo > b.custo) {
@@ -56,7 +56,7 @@ export default props => {
 
                 return 0;
             });
-            console.log(custoTotal)
+
             setCustoTotal(custoTotal)
 
             //grafico essencias mais consumidas
@@ -135,6 +135,32 @@ export default props => {
                 </View>
 
                 {
+                    recipesProduced.length < 1 ?
+                        <View style={{ justifyContent: 'center', alignItems: 'center', flex: 1, paddingHorizontal: '5%' }}>
+                            <Text style={{ fontStyle: estilo.fonts.negrito, fontSize: RFValue(20), color: estilo.colors.azul, paddingBottom: RFValue(20) }}>Não há registros de receitas produzidas.  </Text>
+                            <View style={{ width: '100%' }}>
+                                <TouchableOpacity
+                                    onPress={() => {
+                                        console.log('press')
+                                        navigation.navigate('Recipe')
+                                    }}
+                                >
+                                    <View style={styles.button}>
+                                        <Text style={styles.buttonText}>Produzir Receita</Text>
+                                    </View>
+                                </TouchableOpacity>
+                            </View>
+
+                            {/* <ImageBackground
+                                source={require('../assets/background/prancheta.jpg')}
+                                style={{ width: '100%', height: '100%', borderWidth: 1 }}
+                                resizeMode='contain'
+                            /> */}
+                        </View>
+                        : false
+                }
+
+                {
                     changeChartsOrHistoric ?
                         <>
                             <FlatList
@@ -196,9 +222,8 @@ export default props => {
                                                         data={custo.sort()}
                                                         x='nome' y='custo'
                                                         alignment="middle"
-                                                        labels={({ datum }) => `${Number(datum.custo).toFixed(2)}` }
+                                                        labels={({ datum }) => `${Number(datum.custo).toFixed(2)}`}
                                                         style={{ data: { fill: estilo.colors.laranja } }}
-                                                        
                                                         sortOrder="descending"
                                                     />
                                                     <VictoryAxis
@@ -225,7 +250,7 @@ export default props => {
                 }
 
 
-            </View>
+            </View >
         </>
     )
 }
@@ -257,12 +282,25 @@ const styles = StyleSheet.create({
     textCardEssence: {
         color: estilo.colors.azul,
         fontFamily: estilo.fonts.negrito,
-        textAlign: 'center'
+        textAlign: 'center',
+        marginTop: RFValue(10)
     },
     textCardRecipeBottom: {
         color: estilo.colors.azul,
         backgroundColor: estilo.colors.cinza,
         fontSize: RFValue(15),
         fontFamily: estilo.fonts.padrao
-    }
+    },
+    button: {
+        backgroundColor: estilo.colors.laranja,
+        width: '100%',
+        height: Dimensions.get('window').height / 20,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginVertical: RFValue(25),
+        borderRadius: RFValue(5),
+        alignSelf: 'center',
+
+
+    },
 })

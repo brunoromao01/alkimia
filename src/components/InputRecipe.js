@@ -14,7 +14,7 @@ export default ({ data, deletion, index, vg }) => {
 
             <View flexDirection='row' style={styles.cardEssence}>
                 <View style={{ width: '70%' }}>
-                    <Text style={styles.textCardEssence}>{data.essencia.name} - {data.essencia.brand.name}</Text>
+                    <Text numberOfLines={1} adjustsFontSizeToFit style={styles.textCardEssence}>{data.essencia.name} - {data.essencia.brand.name}</Text>
                 </View>
 
                 <View style={{ width: '20%', alignItems: 'center', justifyContent: 'center' }}>
@@ -38,7 +38,7 @@ const styles = StyleSheet.create({
         // borderTopColor: '#ccc',
         padding: RFValue(10),
         elevation: 1,
-        borderRadius: RFValue(5)
+        // borderRadius: RFValue(5)
     },
     textCardEssence: {
         color: estilo.colors.azul,

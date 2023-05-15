@@ -4,7 +4,7 @@ import { VictoryBar, VictoryChart, VictoryTheme } from "victory-native";
 import estilo from '../estilo'
 import Feather from 'react-native-vector-icons/Feather'
 import { RFValue } from 'react-native-responsive-fontsize'
-import { TextInput } from 'react-native-paper'
+import { Switch, TextInput } from 'react-native-paper'
 import { v4 as uuid } from 'uuid'
 import { getRealm } from '../services/realm'
 import Settings from '../assets/tabIcon/settings.svg'
@@ -12,6 +12,7 @@ import Settings from '../assets/tabIcon/settings.svg'
 export default props => {
 
     const [modalVisible, setModalVisible] = useState(false)
+    const [changeSwitch, setChangeSwitch] = useState(false)
     const [pgDefault, setPgDefault] = useState(0)
     const [vgDefault, setVgDefault] = useState(0)
     const [stepSlide, setStepSlide] = useState(0)
@@ -117,7 +118,14 @@ export default props => {
                             activeOutlineColor={estilo.colors.laranja}
                             selectionColor='#ccc'
                             value={`${pgDefault}`}
-                            onChangeText={pg => setPgDefault(pg)}
+                            maxLength={4}
+                            onChangeText={pg => {
+                                if (pg.includes(',')) {
+                                    return
+                                } else {
+                                    setPgDefault(pg)
+                                }
+                            }}
                         />
                         <TextInput
                             style={styles.inputModal}
@@ -130,6 +138,7 @@ export default props => {
                             activeOutlineColor={estilo.colors.laranja}
                             selectionColor='#ccc'
                             value={`${vgDefault}`}
+                            maxLength={4}
                             onChangeText={vg => setVgDefault(vg)}
                         />
                         <TextInput
@@ -142,8 +151,9 @@ export default props => {
                             outlineColor={estilo.colors.azul}
                             activeOutlineColor={estilo.colors.laranja}
                             selectionColor='#ccc'
+                            maxLength={1}
                             value={`${stepSlide}`}
-                            onChangeText={step => setStepSlide(step)}
+                            onChangeText={step => setStepSlide(step.replace(/\D/g, ''))}
                         />
                         <TextInput
                             style={styles.inputModal}
@@ -156,7 +166,8 @@ export default props => {
                             activeOutlineColor={estilo.colors.laranja}
                             selectionColor='#ccc'
                             value={`${breath}`}
-                            onChangeText={breath => setBreath(breath)}
+                            maxLength={2}
+                            onChangeText={breath => setBreath(breath.replace(/\D/g, ''))}
                         />
                         <TextInput
                             style={styles.inputModal}
@@ -168,9 +179,11 @@ export default props => {
                             outlineColor={estilo.colors.azul}
                             activeOutlineColor={estilo.colors.laranja}
                             selectionColor='#ccc'
+                            maxLength={2}
                             value={`${months}`}
-                            onChangeText={months => setMonths(months)}
+                            onChangeText={months => setMonths(months.replace(/\D/g, ''))}
                         />
+
                         <TouchableOpacity
                             onPress={() => saveConfig()}
                         >

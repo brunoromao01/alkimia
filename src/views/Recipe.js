@@ -3,6 +3,7 @@ import { StyleSheet, View, Text, Dimensions, TouchableOpacity, Alert, TouchableW
 import { Root, Toast } from 'react-native-popup-confirm-toast'
 import AwesomeAlert from 'react-native-awesome-alerts';
 import { TextInput } from 'react-native-paper'
+import { LogBox } from 'react-native';
 import SelectDropdown from 'react-native-select-dropdown'
 import Header from '../components/Header'
 import estilo from '../estilo'
@@ -17,6 +18,10 @@ import { v4 as uuid } from 'uuid'
 import InputRecipe from '../components/InputRecipe'
 import SeparatorFlatlist from '../components/SeparatorFlatlist'
 import { useRef } from 'react'
+
+// LogBox.ignoreLogs(['Warning: Encountered two children with the same key, ']);
+LogBox.ignoreAllLogs();
+
 
 const height = Dimensions.get('window').height
 
@@ -88,7 +93,7 @@ export default props => {
                 v.addListener((values) => {
                     setVgpg([...values])
                 })
-                config.addListener((values) => {                    
+                config.addListener((values) => {
                     setStep(values[0].stepDefault)
                     setBreath(values[0].breathDefault)
                     setMonths(values[0].monthDefault)
@@ -119,16 +124,19 @@ export default props => {
             setEssenceEmpty(true)
         }
         if (quantidade > 0 && essenceSelected._id) {
-            console.log(essencesWithPercent)
+
             for (let index = 0; index < essencesWithPercent.length; index++) {
-                if (essencesWithPercent[index].essencia == essenceSelected) {
+                if (essencesWithPercent[index].essencia._id == essenceSelected._id) {
+                    console.log(essencesWithPercent[index].essencia._id)
                     setShowAlertDuplicatedEssence(true)
 
                     essenciaRepetida = true
                 } else {
                     essenciaRepetida = false
                 }
+
             }
+            console.log(essenciaRepetida)
             if (!essenciaRepetida) {
                 setEssencesWithPercent(old => [...old, { essencia: essenceSelected, percent: Number(quantidade) }])
                 setPercents(old => [...old, Number(quantidade)])
@@ -224,30 +232,40 @@ export default props => {
     }
 
     const cloningRecipe = ({ name, essences, percents, vg, essenceVg, essencePg }) => {
-        setEssencesWithPercent([])
-        essences.map((essence, ind) => {
-            setEssencesWithPercent(old => [...old, { essencia: essence, percent: percents[ind] }])
-        })
-        setPgSelected(essencePg)
-        setVgSelected(essenceVg)
-        setNameRecipe(name)
-        setRange(vg)
-        setEssencesList(essences)
-        setPercents(percents)
-        setShowButtonSaveRecipe(false)
-        setChangeViewForInsert(true)
-        setIdRecipe(0)
+        try {
+            setEssencesWithPercent([])
+            essences.map((essence, ind) => {
+                setEssencesWithPercent(old => [...old, { essencia: essence, percent: percents[ind] }])
+            })
+            setPgSelected(essencePg)
+            setVgSelected(essenceVg)
+            setNameRecipe(name)
+            setRange(vg)
+            setEssencesList(essences)
+            setPercents(percents)
+            setShowButtonSaveRecipe(false)
+            setChangeViewForInsert(true)
+            setIdRecipe(0)
+        } catch (err) {
+            console.log(err)
+        }
     }
- 
+
 
     //deletando receita das receitas cadastradas - é chamado pelo alert. Verifica se já não foi produzida
     const deletingRecipe = async data => {
-        console.log(data)
         try {
             const realm = await getRealm()
             const recipeProduced = realm.objects('RecipeProduced')
             const recipe = realm.objectForPrimaryKey('Recipe', data._id)
-            const receitalocalizada = recipeProduced.filtered(`recipe._id == "${data._id}"`).length
+            var receitalocalizada = 0
+            console.log(data)
+            recipeProduced.map(recipe => {
+                if (recipe.recipe._id == data._id) {
+                    receitalocalizada++
+                }
+            })
+
             if (receitalocalizada > 0) {
                 showToast('Receita já produzida, não é possível excluí-la')
             } else {
@@ -527,18 +545,12 @@ export default props => {
                         }}
                     />
 
-
-
-
-
-
-
                     <View style={{ flexDirection: 'row', width: '100%', marginBottom: RFValue(30), paddingHorizontal: RFValue(20) }}>
 
                         <TouchableWithoutFeedback onPress={() => setChangeViewForInsert(true)}>
                             <View style={{ width: '50%', alignItems: 'center', borderBottomWidth: changeViewForInsert ? 3 : 1, borderColor: changeViewForInsert ? estilo.colors.azul : '#666' }}>
                                 <Text style={[styles.buttonText, { fontFamily: estilo.fonts.padrao, color: changeViewForInsert ? estilo.colors.azul : '#666' }]}>
-                                    Nova Receita
+                                    Nova receita
                                 </Text>
                             </View>
                         </TouchableWithoutFeedback>
@@ -582,15 +594,11 @@ export default props => {
                                     selectionColor='#ccc'
                                     value={quantityRecipe}
                                     onChangeText={q => {
-                                        if (q.includes(',')) {
-                                            return
-                                        } else {
-                                            setQuantityEmpty(false)
-                                            setQuantityRecipe(q)
-                                        }
+                                        setQuantityEmpty(false)
+                                        setQuantityRecipe(q.replace(/\D/g, '') )
                                     }}
                                 />
-                                {quantityEmpty ? <Text style={{ color: '#ccc', width: '90%', alignSelf: 'center' }}>*Informe uma quantidade válida</Text> : false}
+                                {quantityEmpty ? <Text style={{ color: '#999', width: '90%', alignSelf: 'center' }}>*Informe uma quantidade válida</Text> : false}
 
                                 <TextInput
                                     style={styles.inputModal}
@@ -602,8 +610,9 @@ export default props => {
                                     outlineColor={estilo.colors.azul}
                                     activeOutlineColor={estilo.colors.laranja}
                                     selectionColor='#ccc'
+                                    maxLength={2}
                                     value={`${breath}`}
-                                    onChangeText={d => setBreath(d)}
+                                    onChangeText={d => setBreath(d.replace(/\D/g, '') )}
                                 />
                                 <TextInput
                                     style={styles.inputModal}
@@ -616,7 +625,8 @@ export default props => {
                                     activeOutlineColor={estilo.colors.laranja}
                                     selectionColor='#ccc'
                                     value={`${months}`}
-                                    onChangeText={m => setMonths(m)}
+                                    maxLength={2}
+                                    onChangeText={m => setMonths(m.replace(/\D/g, '') )}
                                 />
 
                                 <TouchableOpacity
@@ -648,7 +658,8 @@ export default props => {
 
                     {
                         changeViewForInsert ?
-                            <View style={{ paddingHorizontal: RFValue(20) }}>
+                            // Nova receita
+                            <View style={{ paddingHorizontal: RFValue(20), height: RFPercentage(60) }}>
                                 <View style={{ alignItems: 'center' }}>
                                     <View style={{ flexDirection: 'row', width: '90%', justifyContent: 'space-between' }}>
                                         <Text style={styles.textSlider}>{range}</Text>
@@ -665,7 +676,7 @@ export default props => {
                                     maximumTrackTintColor={estilo.colors.azul}
                                     thumbTintColor={estilo.colors.laranja}
                                 />
-                                <View style={{ alignItems: 'center', paddingHorizontal: 5 }}>
+                                <View style={{ alignItems: 'center', }}>
                                     <View style={{ flexDirection: 'row', width: '90%', justifyContent: 'space-between', height: RFValue(30) }}>
                                         <Text style={styles.textSlider}>VG</Text>
                                         <Text style={styles.textSlider}>PG</Text>
@@ -683,6 +694,7 @@ export default props => {
                                     outlineColor={estilo.colors.azul}
                                     activeOutlineColor={estilo.colors.laranja}
                                     selectionColor='#ccc'
+                                    maxLength={20}
                                     value={nameRecipe}
                                     onChangeText={recipe => setNameRecipe(recipe)}
                                 />
@@ -698,7 +710,7 @@ export default props => {
                                     }}>
                                         <View style={{ justifyContent: 'space-around', flexDirection: 'row', paddingVertical: RFValue(7), backgroundColor: 'transparent', paddingHorizontal: RFValue(10), borderWidth: 2, borderColor: estilo.colors.laranja, borderRadius: 10, alignItems: 'center' }}>
                                             <FontAwesome name='plus' size={RFValue(14)} color={estilo.colors.laranja} />
-                                            <Text style={{ marginLeft: RFValue(7), color: estilo.colors.laranja }}>Inserir Essência</Text>
+                                            <Text style={{ marginLeft: RFValue(7), color: estilo.colors.laranja }}>Inserir essência</Text>
                                         </View>
                                     </TouchableOpacity>
                                 </View>
@@ -779,7 +791,7 @@ export default props => {
                                                 rowStyle={{ backgroundColor: 'white' }}
                                                 dropdownIconPosition='right'
                                             />
-                                            {essenceEmpty ? <Text style={{ color: '#ccc' }}>*Informe uma essência</Text> : false}
+                                            {essenceEmpty ? <Text style={{ color: '#999' }}>*Informe uma essência</Text> : false}
                                             <TextInput
                                                 // ref={refQuantidadePorcentagem}
                                                 style={styles.inputModal}
@@ -792,17 +804,9 @@ export default props => {
                                                 activeOutlineColor={estilo.colors.laranja}
                                                 selectionColor='#ccc'
                                                 value={quantidade}
-                                                onChangeText={q => {
-                                                    if (q.includes(',')) {
-                                                        return
-                                                    } else if (q.includes('.')) {
-                                                        return
-                                                    } else {
-                                                        setQuantidade(q)
-                                                    }
-                                                }}
+                                                onChangeText={q => setQuantidade(q.replace(/\D/g, ''))}
                                             />
-                                            {quantityPercentEmpty && !quantidade ? <Text style={{ color: '#ccc' }}>*Digite a quantidade</Text> : false}
+                                            {quantityPercentEmpty && !quantidade ? <Text style={{ color: '#999' }}>*Digite a quantidade</Text> : false}
                                             <TouchableOpacity
                                                 onPress={() => insertEssence()}
                                             >
@@ -828,7 +832,7 @@ export default props => {
                                         <View style={{ flex: 1, backgroundColor: 'transparent', backgroundColor: 'rgba(0,0,0,0.6)' }} />
                                     </TouchableWithoutFeedback>
                                 </Modal>
-                                <View style={{ height: '46%' }}>
+                                <View style={{ height: height * 0.4 }}>
                                     <FlatList
                                         data={essencesWithPercent}
                                         keyExtractor={item => item.essencia._id}
@@ -840,7 +844,7 @@ export default props => {
 
                                             return (
                                                 <>
-                                                    <View flexDirection='row' style={[styles.cardEssence, { padding: RFValue(5), borderRadius: RFValue(5), }]}>
+                                                    <View flexDirection='row' style={[styles.cardEssence, { padding: RFValue(5) }]}>
                                                         <View style={{ width: '20%', paddingLeft: RFValue(10), justifyContent: 'center' }}>
                                                             <Text style={styles.textCardEssence}>VG</Text>
                                                         </View>
@@ -893,7 +897,7 @@ export default props => {
                                                         </View>
                                                     </View>
                                                     <SeparatorFlatlist />
-                                                    <View flexDirection='row' style={[styles.cardEssence, { padding: RFValue(5), borderRadius: RFValue(5), }]}>
+                                                    <View flexDirection='row' style={[styles.cardEssence, { padding: RFValue(5) }]}>
                                                         <View style={{ width: '20%', paddingLeft: RFValue(10), justifyContent: 'center' }}>
                                                             <Text style={styles.textCardEssence}>PG</Text>
                                                         </View>
@@ -950,39 +954,41 @@ export default props => {
                                         ItemSeparatorComponent={<SeparatorFlatlist />}
                                     >
                                     </FlatList>
+                                    {
+                                        showButtonSaveRecipe ?
+                                            false :
+                                            <>
+                                                <TouchableOpacity
+                                                    onPress={() => {
+                                                        if (vgSelected == undefined || vgSelected == '' || pgSelected == undefined || pgSelected == '') {
+                                                            setShowAlertPgOrVgEmpty(true)
+                                                        } else {
+                                                            saveNewRecipe()
+                                                        }
+                                                    }}
+                                                >
+                                                    <View style={[styles.button]}>
+                                                        <Text style={styles.buttonText}>Salvar receita</Text>
+                                                    </View>
+
+                                                </TouchableOpacity>
+                                                {/* <View style={{height: RFValue(70), backgroundColor: 'blue'}}></View> */}
+                                            </>
+                                    }
+
 
                                 </View>
-                                {
-                                    showButtonSaveRecipe ?
-                                        false :
-                                        <>
-                                            <TouchableOpacity
-                                                onPress={() => {
-                                                    if (vgSelected == undefined || vgSelected == '' || pgSelected == undefined || pgSelected == '') {
-                                                        setShowAlertPgOrVgEmpty(true)
-                                                    } else {
-                                                        saveNewRecipe()
-                                                    }
-                                                }}
-                                            >
-                                                <View style={[styles.button]}>
-                                                    <Text style={styles.buttonText}>Salvar receita</Text>
-                                                </View>
-
-                                            </TouchableOpacity>
-                                            {/* <View style={{height: RFValue(70), backgroundColor: 'blue'}}></View> */}
-                                        </>
-                                }
 
                             </View>
 
 
-                            : <>
+                            : <View style={{ paddingBottom: RFValue(100) }}>
+                                {/* receitas cadastradas */}
                                 <AwesomeAlert
                                     show={showAlert}
                                     showProgress={false}
                                     title="Ops, quantidade incompatível"
-                                    message={`As essências não tem estoque suficiente. O máximo que pode ser produzido é ${newQuantityRecipe.toFixed(2)}ml. Deseja fazer essa nova quantidade ? `}
+                                    message={`Alguma essência não tem estoque suficiente. O máximo que pode ser produzido é ${newQuantityRecipe.toFixed(2)}ml. Deseja fazer essa nova quantidade ? `}
                                     closeOnTouchOutside={false}
                                     closeOnHardwareBackPress={false}
                                     showCancelButton={true}
@@ -996,10 +1002,7 @@ export default props => {
                                         setShowModalProduce(false)
                                         saveRecipeProduced(newQuantityRecipe)
                                     }}
-
                                 />
-
-
 
                                 <FlatList
                                     data={recipes}
@@ -1007,17 +1010,11 @@ export default props => {
                                     renderItem={({ item }) => <CardRecipe data={item} deletingRecipe={deletingRecipe} cloningRecipe={cloningRecipe} producingRecipe={producingRecipe} editingRecipe={editingRecipe} />}
                                     ItemSeparatorComponent={<SeparatorFlatlist />}
                                 />
-
-                            </>
-
+                            </View>
                     }
-
-
                 </View >
-
-
             </View >
-            <View style={{ flex: 1 }} />
+            <View style={{ flex: 1, backgroundColor: 'white' }} />
         </>
 
     )
@@ -1029,16 +1026,15 @@ const styles = StyleSheet.create({
     },
     body: {
         borderRadius: RFValue(10),
-        height: '100%',
+        height: height * 0.79,
         width: '100%',
-        paddingVertical: RFValue(20),
-        // paddingHorizontal: RFValue(20),
+        paddingTop: RFValue(20),
         alignSelf: 'center',
+        backgroundColor: 'white'
 
-        backgroundColor: 'white',
     },
     textSlider: {
-        fontSize: RFValue(15),
+        fontSize: RFValue(12),
         color: estilo.colors.azul,
         textAlign: 'center',
         fontFamily: estilo.fonts.padrao
@@ -1143,7 +1139,5 @@ const styles = StyleSheet.create({
         padding: RFValue(10),
         elevation: 1,
     },
-    ingredienteDropdown: {
-
-    }
+   
 })

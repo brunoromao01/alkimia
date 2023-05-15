@@ -61,13 +61,13 @@ export default props => {
                 <View style={{ width: '100%', flexDirection: 'row' }}>
 
                     <View style={{ width: '45%' }}>
-                        <Text style={styles.textCardEssence}>{props.item.name}</Text>
+                        <Text adjustsFontSizeToFit numberOfLines={1} style={styles.textCardEssence}>{props.item.name}</Text>
                     </View>
                     <View style={{ width: '30%', alignItems: 'center' }}>
-                        <Text style={styles.textCardEssence}>{props.item.brand.name}</Text>
+                        <Text adjustsFontSizeToFit numberOfLines={1} style={styles.textCardEssence}>{props.item.brand.name}</Text>
                     </View>
                     <View style={{ width: '15%', alignItems: 'flex-end', marginRight: RFValue(5) }}>
-                        <Text style={styles.textCardEssence}>{(props.item.quantity).toFixed(2)}</Text>
+                        <Text adjustsFontSizeToFit numberOfLines={1} style={styles.textCardEssence}>{(props.item.quantity).toFixed(2)}</Text>
                     </View>
                     <View style={{ width: '5%', alignItems: 'flex-end', }}>
                         <Menu>
