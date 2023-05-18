@@ -18,6 +18,8 @@ export default ({ data, saveRating }) => {
     var datavencimentodescanso = 0
     var mesVencimento = 0
     if (data.breath > 0) datavencimentodescanso = moment(data.createdAt).add(data.breath, 'days').calendar()
+    if (datavencimentodescanso >= moment().calendar()) datavencimentodescanso = 'Pronto'
+   
     if (data.months > 0) mesVencimento = moment(data.createdAt).add(data.months, 'months').format('MM/YYYY');
 
     var essencias = []

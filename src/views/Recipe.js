@@ -1,16 +1,16 @@
 import React, { useCallback, useState } from 'react'
-import { StyleSheet, View, Text, Dimensions, TouchableOpacity, Alert, TouchableWithoutFeedback, Modal, FlatList, ToastAndroid } from 'react-native'
+import { StyleSheet, View, Text, Dimensions, TouchableOpacity, Alert, TouchableWithoutFeedback, Modal, FlatList, ToastAndroid, ActivityIndicator } from 'react-native'
 import { Root, Toast } from 'react-native-popup-confirm-toast'
 import AwesomeAlert from 'react-native-awesome-alerts';
 import { TextInput } from 'react-native-paper'
 import { LogBox } from 'react-native';
 import SelectDropdown from 'react-native-select-dropdown'
+import { useFocusEffect, useNavigation } from '@react-navigation/native'
 import Header from '../components/Header'
 import estilo from '../estilo'
 import Slider from '@react-native-community/slider'
 import CardRecipe from '../components/CardRecipe'
 import FontAwesome from 'react-native-vector-icons/FontAwesome'
-import { useFocusEffect } from '@react-navigation/native'
 import { getRealm } from '../services/realm'
 import Fontisto from 'react-native-vector-icons/Fontisto'
 import { RFPercentage, RFValue } from "react-native-responsive-fontsize"
@@ -26,11 +26,13 @@ LogBox.ignoreAllLogs();
 const height = Dimensions.get('window').height
 
 export default props => {
+    const navigation = useNavigation()
     const [range, setRange] = useState(70) //slide vg pg
     const [essenceSelected, setEssenceSelected] = useState({})
     const [essences, setEssences] = useState({})
     const [vgpg, setVgpg] = useState({})
     const [modalVisible, setModalVisible] = useState(false);
+    const [modalLoading, setModalLoading] = useState(false);
     const [changeViewForInsert, setChangeViewForInsert] = useState(true);
     const [showModalProduce, setShowModalProduce] = useState(false);
     const [quantidade, setQuantidade] = useState();
@@ -45,10 +47,12 @@ export default props => {
     const [quantityRecipe, setQuantityRecipe] = useState(0);
     const [breath, setBreath] = useState(0);
     const [months, setMonths] = useState(0);
-    const [newQuantityRecipe, setNewQuantityrecipe] = useState(0);
+    const [newQuantityRecipe, setNewQuantityRecipe] = useState(0);
     const [recipeWillProduced, setRecipeWillProduced] = useState();
     const [vgSelected, setVgSelected] = useState();
     const [pgSelected, setPgSelected] = useState();
+
+    const [quantityUsed, setQuantityUsed] = useState()
     const refNameRecipe = useRef()
     const refQuantityRecipe = useRef()
 
@@ -127,7 +131,7 @@ export default props => {
 
             for (let index = 0; index < essencesWithPercent.length; index++) {
                 if (essencesWithPercent[index].essencia._id == essenceSelected._id) {
-                    console.log(essencesWithPercent[index].essencia._id)
+
                     setShowAlertDuplicatedEssence(true)
 
                     essenciaRepetida = true
@@ -136,7 +140,7 @@ export default props => {
                 }
 
             }
-            console.log(essenciaRepetida)
+
             if (!essenciaRepetida) {
                 setEssencesWithPercent(old => [...old, { essencia: essenceSelected, percent: Number(quantidade) }])
                 setPercents(old => [...old, Number(quantidade)])
@@ -151,7 +155,7 @@ export default props => {
 
     //deletando essencia da listagem da receita
     const deletingItem = async (data, index) => {
-        console.log(idRecipe)
+
         if (idRecipe != 0) {
             var essenceListFiltered2 = []
             var essencePercentFiltered2 = []
@@ -177,15 +181,15 @@ export default props => {
                 }, 'modified')
             })
         }
-        console.log('aqui1')
+
         const essenceListFiltered = [...essencesList]
         const essencePercentFiltered = [...percents]
 
         const essencesFiltered = essencesWithPercent.filter(essence => essence != data)
-        console.log('aqui2')
+
         essenceListFiltered.splice(index, 1)
         essencePercentFiltered.splice(index, 1)
-        console.log('aqui3')
+
         setEssencesList(essenceListFiltered)
         setPercents(essencePercentFiltered)
         setEssencesWithPercent(essencesFiltered)
@@ -259,7 +263,7 @@ export default props => {
             const recipeProduced = realm.objects('RecipeProduced')
             const recipe = realm.objectForPrimaryKey('Recipe', data._id)
             var receitalocalizada = 0
-            console.log(data)
+
             recipeProduced.map(recipe => {
                 if (recipe.recipe._id == data._id) {
                     receitalocalizada++
@@ -284,40 +288,47 @@ export default props => {
 
     const producingRecipe = async data => {
         setShowModalProduce(true)
-        console.log('producingRecipe')
-        console.log(typeof data)
+
         setRecipeWillProduced(data)
     }
 
     //compara quantidade usada na receita com quantidade disponivel
-    //caso quantidade disponivel seja menor, é recomendado a maior quantidade
+    //caso quantidade disponivel seja menor, é recomendado a maior quantidade possivel
     const productionAnalysis = async () => {
+
         var percentualGeral = []
         const arrQuantidadeEstoque = []
         const arrQuantidadeUsada = []
+        const arrQuantidadeUsadaRecomendada = []
         const arrDivergencia = []
         var cont = 0
+        var pgQuantidadeUsada = 0
         //arrQuantidadeUsada = convertendo a porcentagem das essencias da receita em valor, baseado na quantidade da receita
-        recipeWillProduced.percents.map(percent => arrQuantidadeUsada.push((percent * quantityRecipe) / 100))
+        recipeWillProduced.percents.map((percent, ind) => {
+            console.log(percent + recipeWillProduced.essences[ind])
+            pgQuantidadeUsada += (percent * quantityRecipe) / 100
+            arrQuantidadeUsada.push((percent * quantityRecipe) / 100)
+        })
         //arrQuantidadeEstoque = quantidade no estoque de cada essência
         recipeWillProduced.essences.map(essencia => arrQuantidadeEstoque.push(essencia.quantity))
-        var pgQuantidadeUsada = 0
-        for (let index = 0; index < arrQuantidadeUsada.length; index++) {
-            console.log(arrQuantidadeUsada[index])
-            pgQuantidadeUsada += arrQuantidadeUsada[index]
-        }
+
+
         arrQuantidadeUsada.push((recipeWillProduced.pg * quantityRecipe / 100) - pgQuantidadeUsada) //percentual em valor = pg
         arrQuantidadeUsada.push(Number(recipeWillProduced.vg * quantityRecipe / 100)) //percentual em valor = vg
-        arrQuantidadeEstoque.push(recipeWillProduced.essencePg.quantity) //quantidade estoque pg     
+
+
+        arrQuantidadeEstoque.push(recipeWillProduced.essencePg.quantity) //quantidade estoque pg    
+
         arrQuantidadeEstoque.push(recipeWillProduced.essenceVg.quantity) //quantidade estoque vg
+
         percentualGeral = [...recipeWillProduced.percents] //porcentagem apenas das essencias
         percentualGeral.push(recipeWillProduced.pg) //percentualGeral = acrescentando percentual de pg e vg na listagem
         percentualGeral.push(recipeWillProduced.vg)
 
+
         //Ex: percentualGeral = [essencia1%, essencia2%, essencia3%, ..., pg%, vg%]
 
         for (let index = 0; index < arrQuantidadeEstoque.length; index++) {
-
             if (arrQuantidadeUsada[index] <= arrQuantidadeEstoque[index]) {
                 cont++ //contador para saber se todas as essencias estao com estoque ok
             } else {
@@ -332,15 +343,27 @@ export default props => {
             const minValue = arrDivergencia.reduce(function (prev, current) {
                 return prev < current ? prev : current;
             });
-            console.log('salvar receita com quantidade recomendada')
+
             if (minValue == 0) {
                 //Entrando aqui significa que a quantidade calculada é 0
                 setShowAlertEssenceWithoutStock(true)
             } else {
                 //Entrando aqui significa que a quantidade recomendada será usada
-                setNewQuantityrecipe(minValue)
+                setNewQuantityRecipe(minValue)
+
                 setShowAlert(true)
-                updateQuantityEssences(recipeWillProduced, minValue)
+                pgQuantidadeUsada = 0
+                recipeWillProduced.percents.map(percent => {
+                    pgQuantidadeUsada += (percent * minValue) / 100
+                    arrQuantidadeUsadaRecomendada.push((percent * minValue) / 100)
+                })
+                arrQuantidadeUsadaRecomendada.push((recipeWillProduced.pg * minValue / 100) - pgQuantidadeUsada) //percentual em valor = pg
+                arrQuantidadeUsadaRecomendada.push(Number(recipeWillProduced.vg * minValue / 100)) //percentual em valor = vg
+
+
+                setQuantityUsed(arrQuantidadeUsadaRecomendada)
+
+
             }
         } else {
             if (quantityRecipe == 0) {
@@ -348,39 +371,38 @@ export default props => {
                 setShowAlertEssenceWithoutStock(true)
             } else {
                 //Entrando aqui significa que a quantidade informada será usada
+
                 saveRecipeProduced(quantityRecipe)
-                updateQuantityEssences(recipeWillProduced, quantityRecipe)
+                updateQuantityEssences(arrQuantidadeUsada)
             }
         }
 
     }
 
     //desconta quantidade usada em cada ingrediente
-    async function updateQuantityEssences(recipeWillProduced, quantity) {
-
-        const arrPercentuais = [...recipeWillProduced.percents]
-        var soma = 0
-        arrPercentuais.map(percent => soma += percent)
-        arrPercentuais.push(recipeWillProduced.vg)
-        arrPercentuais.push(recipeWillProduced.pg - soma)
+    async function updateQuantityEssences(arrQuantidadeUsada) {
+        setModalLoading(!modalLoading)
         //arrPercentuais recebe todos os percentuais das essencias usadas = [essencia1%, essencia2%, ..., vg%, pg%]
         const arrEssencias = [...recipeWillProduced.essences]
-        arrEssencias.push(recipeWillProduced.essenceVg)
         arrEssencias.push(recipeWillProduced.essencePg)
+        arrEssencias.push(recipeWillProduced.essenceVg)
         //arrEssencias recebe {Essence} = [{essencia1}, {essencia2}, ..., {vg}, {pg}]
         const realm = await getRealm()
         for (let index = 0; index < arrEssencias.length; index++) {
             try {
+                console.log(arrEssencias[index]._id)
                 const essenciaLocalizada = realm.objectForPrimaryKey('Essence', `${arrEssencias[index]._id}`)
                 realm.write(() => {
                     //buscando a essencia no banco pelo id, é descontado a quantidade usada na receita
-                    essenciaLocalizada.quantity = essenciaLocalizada.quantity - (arrPercentuais[index] * quantity / 100)
+                    essenciaLocalizada.quantity = essenciaLocalizada.quantity - (arrQuantidadeUsada[index])
                 })
             } catch (error) {
                 console.log('ERRO: ' + error)
             }
         }
-
+        setModalLoading(false)
+        showToast('Receita produzida com sucesso')
+        setQuantityUsed([])
     }
 
     async function saveRecipeProduced(quantity) {
@@ -421,13 +443,10 @@ export default props => {
                     rating: Number(0),
                     quantity: Number(quantity)
                 })
-                console.log(recipeProduced)
+
             })
             setQuantityRecipe('')
-            setBreath('')
-            setMonths('')
             setRecipeWillProduced('')
-            setShowModalProduce(false)
         } catch (error) {
             console.log('ERRO: ' + error)
         }
@@ -437,14 +456,13 @@ export default props => {
 
 
     async function saveNewRecipe() {
-        console.log(idRecipe)
         const vg = Number(range)
         const pg = 100 - Number(range)
         const realm = await getRealm()
         var status = idRecipe == 0 ? 'never' : 'modified'
         var id = idRecipe == 0 ? `${uuid()}` : idRecipe
         try {
-            console.log('aqui')
+
             realm.write(() => {
                 realm.create('Recipe', {
                     _id: id,
@@ -488,7 +506,7 @@ export default props => {
                         cancelText="Cancelar."
                         confirmText="Ok, farei isso."
                         confirmButtonColor={estilo.colors.laranja}
-                        onCancelPressed={() => setShowAlert(false)}
+                        onCancelPressed={() => setShowAlertDuplicatedEssence(false)}
                         onConfirmPressed={() => {
                             setShowAlertDuplicatedEssence(false)
                         }}
@@ -522,7 +540,7 @@ export default props => {
                         cancelText="Cancelar."
                         confirmText="Ok, entendi."
                         confirmButtonColor={estilo.colors.laranja}
-                        onCancelPressed={() => setShowAlert(false)}
+                        onCancelPressed={() => setShowAlertPgOrVgEmpty(false)}
                         onConfirmPressed={() => {
                             setShowAlertPgOrVgEmpty(false)
                         }}
@@ -539,7 +557,7 @@ export default props => {
                         cancelText="Cancelar."
                         confirmText="Ok, farei isso."
                         confirmButtonColor={estilo.colors.laranja}
-                        onCancelPressed={() => setShowAlert(false)}
+                        onCancelPressed={() => setShowAlertDuplicatedEssence(false)}
                         onConfirmPressed={() => {
                             setShowAlertDuplicatedEssence(false)
                         }}
@@ -564,6 +582,12 @@ export default props => {
                         </TouchableWithoutFeedback>
 
                     </View>
+                    <Modal visible={modalLoading} transparent >
+                        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }} >
+                            <ActivityIndicator size="large" color={estilo.colors.laranja} />
+                        </View>
+
+                    </Modal>
 
                     {/* modal de produção de receita */}
                     <Modal visible={showModalProduce} onDismiss={() => setShowModalProduce(!showModalProduce)} onRequestClose={() => setShowModalProduce(!showModalProduce)} animationType="fade"
@@ -595,7 +619,7 @@ export default props => {
                                     value={quantityRecipe}
                                     onChangeText={q => {
                                         setQuantityEmpty(false)
-                                        setQuantityRecipe(q.replace(/\D/g, '') )
+                                        setQuantityRecipe(q.replace(/\D/g, ''))
                                     }}
                                 />
                                 {quantityEmpty ? <Text style={{ color: '#999', width: '90%', alignSelf: 'center' }}>*Informe uma quantidade válida</Text> : false}
@@ -612,7 +636,7 @@ export default props => {
                                     selectionColor='#ccc'
                                     maxLength={2}
                                     value={`${breath}`}
-                                    onChangeText={d => setBreath(d.replace(/\D/g, '') )}
+                                    onChangeText={d => setBreath(d.replace(/\D/g, ''))}
                                 />
                                 <TextInput
                                     style={styles.inputModal}
@@ -626,23 +650,24 @@ export default props => {
                                     selectionColor='#ccc'
                                     value={`${months}`}
                                     maxLength={2}
-                                    onChangeText={m => setMonths(m.replace(/\D/g, '') )}
+                                    onChangeText={m => setMonths(m.replace(/\D/g, ''))}
                                 />
 
                                 <TouchableOpacity
                                     onPress={() => {
                                         if (quantityRecipe == undefined || quantityRecipe == '' || quantityRecipe == 0) {
-                                            console.log(quantityRecipe)
+
                                             setQuantityEmpty(true)
                                             refQuantityRecipe.current.focus();
                                         } else {
-                                            console.log('productionAnalysis')
+
+                                            setShowModalProduce(false)
                                             productionAnalysis()
                                         }
                                     }}
                                 >
                                     <View style={styles.button}>
-                                        <Text style={styles.buttonText}>Produzir Receita</Text>
+                                        <Text style={styles.buttonText}>Produzir receita</Text>
                                     </View>
 
                                 </TouchableOpacity>
@@ -976,7 +1001,6 @@ export default props => {
                                             </>
                                     }
 
-
                                 </View>
 
                             </View>
@@ -999,11 +1023,12 @@ export default props => {
                                     onCancelPressed={() => setShowAlert(false)}
                                     onConfirmPressed={() => {
                                         setShowAlert(false)
-                                        setShowModalProduce(false)
                                         saveRecipeProduced(newQuantityRecipe)
+                                        updateQuantityEssences(quantityUsed)
+
+
                                     }}
                                 />
-
                                 <FlatList
                                     data={recipes}
                                     keyExtractor={item => item._id}
@@ -1139,5 +1164,5 @@ const styles = StyleSheet.create({
         padding: RFValue(10),
         elevation: 1,
     },
-   
+
 })

@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { StyleSheet, View, Text, TouchableWithoutFeedback, FlatList, TouchableOpacity, ScrollView, ImageBackground, Dimensions } from 'react-native'
 import { VictoryAxis, VictoryChart, VictoryTheme, VictoryBar, VictoryLabel, VictoryLegend } from "victory-native";
 import Header from '../components/Header'
@@ -11,17 +11,32 @@ import CardRecipeProduced from '../components/CardRecipeProduced'
 
 export default props => {
     const navigation = useNavigation()
+    var receitas = []
     const [recipesProduced, setRecipesProduced] = useState([])
+    const [receitasSlice, setReceitasSlice] = useState([])
     const [changeChartsOrHistoric, setChangeChartsOrHistoric] = useState(true)
+    const [showAllRecipes, setShowAllRecipes] = useState(true)
     const [total, setTotal] = useState([])
     const [custo, setCustoTotal] = useState([])
+
+    useEffect(() => {
+        if (!showAllRecipes && recipesProduced.length > 10) {
+            console.log('slice')
+            receitas = recipesProduced.slice(recipesProduced.length - 10)
+        } else {
+            receitas = recipesProduced
+        }
+        setReceitasSlice(receitas)
+
+
+    }, [showAllRecipes])
 
     useFocusEffect(useCallback(() => {
         async function getRecipes() {
             const realm = await getRealm()
             const r = realm.objects('RecipeProduced')
-
             setRecipesProduced(r)
+            setReceitasSlice(r)
             r.addListener((values) => {
                 setRecipesProduced([...values])
             })
@@ -58,6 +73,7 @@ export default props => {
             });
 
             setCustoTotal(custoTotal)
+            setShowAllRecipes(!showAllRecipes)
 
             //grafico essencias mais consumidas
             var namess = []
@@ -151,26 +167,38 @@ export default props => {
                                 </TouchableOpacity>
                             </View>
 
-                            {/* <ImageBackground
-                                source={require('../assets/background/prancheta.jpg')}
-                                style={{ width: '100%', height: '100%', borderWidth: 1 }}
-                                resizeMode='contain'
-                            /> */}
+
                         </View>
                         : false
                 }
 
                 {
                     changeChartsOrHistoric ?
-                        <>
-                            <FlatList
-                                data={recipesProduced}
-                                keyExtractor={item => item._id}
-                                ItemSeparatorComponent={<SeparatorFlatList />}
-                                renderItem={({ item }) => <CardRecipeProduced data={item} saveRating={saveRating} />}
-                            />
-                            <View style={{ height: RFValue(70) }}></View>
-                        </>
+                        <View style={{ height: '100%', paddingBottom: Dimensions.get('window').height * 0.2 }}>
+                            <View style={{ height: RFValue(20), flexDirection: 'row', justifyContent: 'flex-end', marginRight: RFValue(5) }}>
+                                {
+                                    showAllRecipes ?
+                                        <TouchableWithoutFeedback onPress={() => setShowAllRecipes(!showAllRecipes)}>
+                                            <Text style={styles.textShow}>Mostrar últimos 10</Text>
+                                        </TouchableWithoutFeedback> :
+                                        <TouchableWithoutFeedback onPress={() => setShowAllRecipes(!showAllRecipes)}>
+                                            <Text style={styles.textShow}>Mostrar tudo</Text>
+                                        </TouchableWithoutFeedback>
+                                }
+                            </View>
+
+                            <View style={{ flex: 1 }}>
+                                <FlatList
+                                    data={receitasSlice}
+                                    keyExtractor={item => item._id}
+                                    ItemSeparatorComponent={<SeparatorFlatList />}
+                                    renderItem={({ item }) => <CardRecipeProduced data={item} saveRating={saveRating} />}
+
+                                />
+                            </View>
+
+
+                        </View>
                         :
                         <>
                             <ScrollView>
@@ -303,4 +331,11 @@ const styles = StyleSheet.create({
 
 
     },
+    textShow: {
+        color: estilo.colors.azul,
+        fontFamily: estilo.fonts.padrao,
+
+
+    },
+
 })

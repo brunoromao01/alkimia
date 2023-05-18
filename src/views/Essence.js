@@ -535,6 +535,7 @@ export default props => {
                                 activeOutlineColor={estilo.colors.laranja}
                                 selectionColor='#ccc'
                                 value={`${newQuantity}`}
+                                maxLength={8}
                                 onChangeText={quantity => {
                                     if (regex.test(quantity)) {
                                         setNewQuantity(quantity)
@@ -563,6 +564,7 @@ export default props => {
                                 activeOutlineColor={estilo.colors.laranja}
                                 selectionColor='#ccc'
                                 value={`${newPrice}`}
+                                maxLength={8}
                                 onChangeText={price => {
                                     if (regex.test(price)) {
                                         setNewPrice(price)
@@ -591,6 +593,7 @@ export default props => {
                                 activeOutlineColor={estilo.colors.laranja}
                                 selectionColor='#ccc'
                                 value={newTaste}
+                                maxLength={16}
                                 onChangeText={taste => setNewTaste(taste)}
                             />
 
